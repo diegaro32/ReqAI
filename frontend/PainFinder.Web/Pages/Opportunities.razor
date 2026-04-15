@@ -1,0 +1,239 @@
+@page "/opportunities"
+
+<AuthGuard>
+    <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-txt-primary">Oportunidades</h1>
+        <p class="text-sm text-txt-muted mt-1">Todas las oportunidades de tus búsquedas, ordenadas por confianza</p>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="flex items-center gap-3 text-txt-secondary">
+            <div class="w-5 h-5 border-2 border-semantic-opportunity/30 border-t-semantic-opportunity rounded-full animate-spin"></div>
+            <span class="text-sm">Cargando...</span>
+        </div>
+    }
+    else if (_groups.Count == 0)
+    {
+        <div class="glass-card p-8 text-center">
+            <Icon Name="lightbulb" Size="32" Class="text-txt-muted mx-auto mb-3" StrokeWidth="1.5" />
+            <p class="text-txt-muted text-sm">Sin oportunidades aún. <a href="/search" class="text-semantic-system hover:text-semantic-highlight transition-colors">Realiza una búsqueda</a> primero.</p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-8">
+            @{
+                var globalIndex = 0;
+            }
+            @foreach (var group in _groups.Take(_visibleGroups))
+            {
+                <div>
+                    @* Search header *@
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <Icon Name="search" Size="16" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                            <span class="text-sm font-semibold text-txt-primary">"@group.SearchKeyword"</span>
+                            <span class="text-xs text-txt-muted">@group.Opportunities.Count oportunidades</span>
+                        </div>
+                        <a href="/search/@group.SearchRunId"
+                           class="flex items-center gap-1.5 text-[12px] font-medium text-semantic-system hover:text-semantic-highlight transition-colors">
+                            Ver en búsqueda
+                            <Icon Name="arrow-right" Size="14" StrokeWidth="1.5" />
+                        </a>
+                    </div>
+
+                    @* Opportunities grid *@
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        @foreach (var opp in group.Opportunities)
+                        {
+                            globalIndex++;
+                            var decisionColor = opp.BuildDecision switch
+                            {
+                                "STRONG YES" => "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+                                "WEAK YES"   => "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+                                _            => "bg-semantic-pain/15 text-semantic-pain border-semantic-pain/30"
+                            };
+                            var decisionIcon = opp.BuildDecision switch
+                            {
+                                "STRONG YES" => "🟢",
+                                "WEAK YES"   => "🟡",
+                                _            => "🔴"
+                            };
+
+                            <div class="glass-card glow-opportunity p-6 bg-gradient-to-br from-semantic-opportunity/[0.03] to-transparent">
+                                @* Header *@
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex-1 pr-3">
+                                        <h3 class="font-bold text-xl text-txt-primary leading-snug">@globalIndex. @opp.Title</h3>
+                                        <p class="text-[12px] text-txt-muted mt-1">@opp.MarketCategory · @opp.ClusterTitle</p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                        @if (!string.IsNullOrEmpty(opp.BuildDecision))
+                                        {
+                                            <span class="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-bold @decisionColor">
+                                                @decisionIcon @opp.BuildDecision
+                                            </span>
+                                        }
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2.5 py-1 text-[11px] font-bold">
+                                            @((opp.ConfidenceScore * 100).ToString("F0"))% confianza
+                                        </span>
+                                    </div>
+                                </div>
+
+                                @* Market Reality Score *@
+                                @if (opp.MarketRealityScore > 0)
+                                {
+                                    <div class="rounded-xl bg-surface-bg/60 border border-surface-border/40 p-3 mb-4">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[10px] font-semibold text-txt-muted uppercase tracking-wider">Realidad de Mercado</span>
+                                            <span class="text-[12px] font-bold @(opp.MarketRealityScore >= 0.75 ? "text-emerald-400" : opp.MarketRealityScore >= 0.5 ? "text-yellow-400" : "text-semantic-pain")">
+                                                @((opp.MarketRealityScore * 100).ToString("F0"))%
+                                            </span>
+                                        </div>
+                                        <div class="w-full bg-surface-border/40 rounded-full h-1.5">
+                                            <div class="h-1.5 rounded-full transition-all @(opp.MarketRealityScore >= 0.75 ? "bg-emerald-400" : opp.MarketRealityScore >= 0.5 ? "bg-yellow-400" : "bg-semantic-pain")"
+                                                 style="width: @((opp.MarketRealityScore * 100).ToString("F0"))%"></div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @* Problem & Solution *@
+                                <div class="space-y-3 mb-4">
+                                    <div>
+                                        <span class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider">Problema</span>
+                                        <p class="text-[13px] text-txt-secondary mt-0.5 leading-relaxed">@opp.ProblemSummary</p>
+                                    </div>
+                                    <div class="border-l-2 border-semantic-system/30 pl-3">
+                                        <span class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider">Solución Sugerida</span>
+                                        <p class="text-[13px] text-semantic-system mt-0.5 leading-relaxed">@opp.SuggestedSolution</p>
+                                    </div>
+                                </div>
+
+                                @* Deep Analysis result inline *@
+                                @if (_deepAnalyses.TryGetValue(opp.Id, out var deep))
+                                {
+                                    <div class="mt-4 pt-4 border-t border-surface-border/20 space-y-3">
+                                        <h5 class="text-[12px] font-bold text-purple-400 flex items-center gap-1.5">
+                                            <span>🔬</span> Análisis Profundo
+                                        </h5>
+                                        <div class="rounded-xl bg-semantic-pain/5 border border-semantic-pain/15 px-3 py-2">
+                                            <p class="text-[12px] text-txt-primary italic">"@deep.SpecificPain"</p>
+                                        </div>
+                                        <div class="rounded-xl bg-purple-500/5 border border-purple-500/15 px-3 py-2">
+                                            <span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Wedge</span>
+                                            <p class="text-[12px] text-txt-primary font-semibold mt-0.5">@deep.Wedge.Statement</p>
+                                        </div>
+                                        <div class="rounded-xl bg-emerald-500/5 border border-emerald-500/15 px-3 py-2">
+                                            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Propuesta de Valor</span>
+                                            <p class="text-[12px] text-emerald-300 font-semibold mt-0.5">@deep.ValueProposition</p>
+                                        </div>
+                                        <p class="text-[11px] text-txt-muted text-right">
+                                            <a href="/search/@group.SearchRunId?tab=Opportunities" class="hover:text-semantic-system transition-colors">Ver análisis completo →</a>
+                                        </p>
+                                    </div>
+                                }
+
+                                <div class="flex items-center justify-between pt-4 border-t border-surface-border/30">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center rounded-full bg-surface-bg/60 border border-surface-border/50 text-txt-muted px-2 py-0.5 text-[11px]">
+                                            @opp.MarketCategory
+                                        </span>
+                                        @if (!string.IsNullOrEmpty(opp.ClusterTitle))
+                                        {
+                                            <span class="inline-flex items-center rounded-full bg-semantic-cluster/10 text-semantic-cluster px-2 py-0.5 text-[11px]">
+                                                @opp.ClusterTitle
+                                            </span>
+                                        }
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @onclick="() => GenerateDeepAnalysisAsync(opp)"
+                                                disabled="@_generatingDeep.Contains(opp.Id)"
+                                                class="inline-flex items-center gap-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 px-3 py-2 text-[12px] font-semibold text-purple-400 hover:bg-purple-500/20 transition-all disabled:opacity-50">
+                                            @if (_generatingDeep.Contains(opp.Id))
+                                            {
+                                                <div class="w-3 h-3 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin"></div>
+                                            }
+                                            else
+                                            {
+                                                <span>🔬</span>
+                                            }
+                                            <span>Analizar</span>
+                                        </button>
+                                        <a href="/search/@group.SearchRunId?tab=Opportunities"
+                                           class="inline-flex items-center gap-2 rounded-xl bg-semantic-system/10 border border-semantic-system/20 px-4 py-2 text-[13px] font-semibold text-semantic-system hover:bg-semantic-system/20 hover:border-semantic-system/40 transition-all">
+                                            Ver Detalles
+                                            <Icon Name="arrow-right" Size="15" StrokeWidth="1.5" />
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* Load more *@
+        @if (_visibleGroups < _groups.Count)
+        {
+            <div class="mt-8 flex flex-col items-center gap-2">
+                <span class="text-[11px] text-txt-muted">
+                    Mostrando @_visibleGroups de @_groups.Count búsquedas
+                </span>
+                <button @onclick="() => _visibleGroups += PageSize"
+                        class="text-[13px] font-medium text-semantic-system hover:text-semantic-highlight bg-semantic-system/8 hover:bg-semantic-system/15 px-5 py-2.5 rounded-xl transition-colors">
+                    Cargar más búsquedas
+                </button>
+            </div>
+        }
+    }
+</AuthGuard>
+
+@code {
+    [Inject] private IOpportunityQueryService OpportunityService { get; set; } = default!;
+    [Inject] private IDeepOpportunityService DeepOpportunityService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+
+    private const int PageSize = 3;
+    private List<OpportunityWithSearchDto> _groups = [];
+    private bool _loading = true;
+    private int _visibleGroups = PageSize;
+
+    private Dictionary<Guid, DeepOpportunityAnalysisDto> _deepAnalyses = [];
+    private HashSet<Guid> _generatingDeep = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (Auth.User is not null)
+                    _groups = (await OpportunityService.GetAllOpportunitiesGroupedBySearchAsync(Auth.User.Id)).ToList();
+            }
+            catch { }
+            finally { _loading = false; StateHasChanged(); }
+        }
+    }
+
+    private async Task GenerateDeepAnalysisAsync(OpportunityDto opp)
+    {
+        if (_generatingDeep.Contains(opp.Id)) return;
+
+        _generatingDeep.Add(opp.Id);
+        StateHasChanged();
+
+        try
+        {
+            var analysis = await DeepOpportunityService.AnalyzeAsync(opp);
+            _deepAnalyses[opp.Id] = analysis;
+        }
+        catch { }
+        finally
+        {
+            _generatingDeep.Remove(opp.Id);
+            StateHasChanged();
+        }
+    }
+}

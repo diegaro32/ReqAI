@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@source "../Components/**/*.razor";
+@source "../../../frontend/PainFinder.Web/**/*.razor";
+
+@theme {
+    --color-surface-bg: #0F172A;
+    --color-surface-card: #1E293B;
+    --color-surface-border: #334155;
+    --color-surface-hover: #263449;
+    --color-navbar: #020617;
+    --color-semantic-pain: #EF4444;
+    --color-semantic-cluster: #F59E0B;
+    --color-semantic-opportunity: #22C55E;
+    --color-semantic-system: #6366F1;
+    --color-semantic-highlight: #06B6D4;
+    --color-txt-primary: #F1F5F9;
+    --color-txt-secondary: #94A3B8;
+    --color-txt-muted: #64748B;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --radius-card: 12px;
+}

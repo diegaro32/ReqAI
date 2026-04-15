@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+*.user
+frontend/web-app/.next/
+frontend/web-app/node_modules/

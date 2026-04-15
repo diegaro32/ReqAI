@@ -1,0 +1,149 @@
+@implements IDisposable
+
+@{
+    var currentPath = "/" + Nav.ToBaseRelativePath(Nav.Uri);
+}
+
+<aside class="fixed top-0 left-0 z-40 h-screen flex flex-col bg-navbar/80 backdrop-blur-xl border-r border-surface-border/50 transition-all duration-300 @(_collapsed ? "w-[68px]" : "w-56")">
+    @* Logo *@
+    <div class="flex items-center justify-center h-16 px-2 border-b border-surface-border/50">
+        <a href="/dashboard" class="flex items-center justify-center overflow-hidden">
+            <img src="/images/logo-queryradar.png" alt="QueryRadar" class="@(_collapsed ? "w-10 h-10" : "h-10") shrink-0 object-contain" />
+        </a>
+    </div>
+
+    @* Navigation *@
+    <nav class="flex-1 py-4 px-2.5 space-y-1 overflow-y-auto">
+        @if (Auth.User is not null)
+        {
+            @foreach (var link in Links)
+            {
+                var isActive = currentPath == link.Href || (link.Href != "/" && currentPath.StartsWith(link.Href));
+                var iconClass = (isActive ? "text-semantic-system" : "text-txt-muted group-hover:text-txt-secondary") + " shrink-0 transition-colors";
+                <a href="@link.Href" title="@(_collapsed ? link.Label : null)"
+                   class="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 @(isActive ? "nav-active-glow bg-semantic-system/10 text-semantic-system" : "text-txt-muted hover:text-txt-primary hover:bg-surface-hover/50")">
+                    <Icon Name="@link.IconName" Size="18" Class="@iconClass" StrokeWidth="1.5" />
+                    @if (!_collapsed)
+                    {
+                        <span class="whitespace-nowrap">@link.Label</span>
+                    }
+                    @if (isActive && !_collapsed)
+                    {
+                        <div class="ml-auto w-1.5 h-1.5 rounded-full bg-semantic-system pulse-dot"></div>
+                    }
+                </a>
+            }
+        }
+    </nav>
+
+    @* Footer *@
+    <div class="px-2.5 pb-4 space-y-2 border-t border-surface-border/50 pt-4">
+        @if (Auth.User is not null)
+        {
+            @if (!_collapsed)
+            {
+                <div class="px-3 mb-2">
+                    <p class="text-xs font-medium text-txt-secondary truncate">@Auth.User.FullName</p>
+                    <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider @PlanBadgeClass(Auth.User.PlanType)">
+                        @PlanIcon(Auth.User.PlanType) @Auth.User.PlanType
+                    </span>
+                </div>
+            }
+            else
+            {
+                <div class="flex justify-center mb-2">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-[9px] font-bold @PlanBadgeClass(Auth.User.PlanType)" title="@Auth.User.PlanType Plan">
+                        @Auth.User.PlanType[..1]
+                    </span>
+                </div>
+            }
+            <a href="/" title="@(_collapsed ? "Home" : null)"
+               class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-txt-muted hover:text-txt-primary hover:bg-surface-hover/50 transition-all">
+                <Icon Name="home" Size="18" Class="shrink-0" StrokeWidth="1.5" />
+                @if (!_collapsed)
+                {
+                    <span>Inicio</span>
+                }
+            </a>
+            <button @onclick="HandleLogout" title="@(_collapsed ? "Logout" : null)"
+                    class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-txt-muted hover:text-semantic-pain hover:bg-semantic-pain/5 transition-all">
+                <Icon Name="log-out" Size="18" Class="shrink-0" StrokeWidth="1.5" />
+                @if (!_collapsed)
+                {
+                    <span>Cerrar sesión</span>
+                }
+            </button>
+        }
+        else
+        {
+            <div class="space-y-1.5 px-1">
+                <a href="/login" class="block text-center rounded-lg bg-semantic-system px-3 py-2 text-xs font-semibold text-white hover:bg-[#4F46E5] transition-colors">
+                    Iniciar sesión
+                </a>
+                <a href="/register" class="block text-center rounded-lg border border-surface-border px-3 py-2 text-xs font-medium text-txt-secondary hover:bg-surface-hover transition-colors">
+                    Registrarse
+                </a>
+            </div>
+        }
+        <button @onclick="() => _collapsed = !_collapsed"
+                class="flex items-center justify-center w-full py-2 text-txt-muted hover:text-txt-secondary transition-colors">
+            <Icon Name="@(_collapsed ? "chevron-right" : "chevron-left")" Size="16" StrokeWidth="1.5" />
+        </button>
+    </div>
+</aside>
+
+@code {
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private bool _collapsed;
+
+    private record NavLink(string Href, string Label, string IconName);
+
+    private static readonly NavLink[] Links =
+    [
+        new("/dashboard", "Dashboard", "layout-dashboard"),
+        new("/search", "Búsqueda", "search"),
+        new("/opportunities", "Oportunidades", "lightbulb"),
+        new("/account", "Cuenta", "user"),
+    ];
+
+    protected override void OnInitialized()
+    {
+        Auth.OnChange += StateHasChanged;
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    private async Task HandleLogout()
+    {
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("/login");
+    }
+
+    public void Dispose()
+    {
+        Auth.OnChange -= StateHasChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+
+    private static string PlanBadgeClass(string plan) => plan switch
+    {
+        "Starter" => "bg-blue-500/15 text-blue-400 border border-blue-500/20",
+        "Pro" => "bg-purple-500/15 text-purple-400 border border-purple-500/20",
+        "Agency" => "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+        _ => "bg-surface-hover text-txt-muted border border-surface-border"
+    };
+
+    private static string PlanIcon(string plan) => plan switch
+    {
+        "Starter" => "🚀",
+        "Pro" => "⚡",
+        "Agency" => "🏢",
+        _ => "🆓"
+    };
+}

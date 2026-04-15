@@ -1,0 +1,151 @@
+@page "/login"
+@inject IJSRuntime JS
+@inject IConfiguration Configuration
+@implements IDisposable
+
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="glass-card p-8 w-full max-w-md">
+        <div class="text-center mb-6">
+            <a href="/" class="inline-block mb-4">
+                <img src="/images/logo-queryradar.png" alt="QueryRadar" class="h-10 mx-auto object-contain" />
+            </a>
+            <p class="text-txt-muted text-[13px]">Inicia sesión en tu cuenta</p>
+        </div>
+
+        <EditForm Model="_model" OnValidSubmit="HandleSubmit" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-txt-secondary">Correo electrónico</label>
+                <input type="email" required @bind="_model.Email"
+                       placeholder="you@example.com"
+                       class="mt-1 block w-full rounded-xl bg-surface-bg border border-surface-border px-4 py-2.5 text-sm text-txt-primary placeholder:text-txt-muted focus:border-semantic-highlight focus:ring-2 focus:ring-semantic-highlight/30 focus:shadow-[0_0_16px_rgba(6,182,212,0.15)] focus:outline-none transition-all" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-txt-secondary">Contraseña</label>
+                <input type="password" required @bind="_model.Password"
+                       placeholder="••••••••"
+                       class="mt-1 block w-full rounded-xl bg-surface-bg border border-surface-border px-4 py-2.5 text-sm text-txt-primary placeholder:text-txt-muted focus:border-semantic-highlight focus:ring-2 focus:ring-semantic-highlight/30 focus:shadow-[0_0_16px_rgba(6,182,212,0.15)] focus:outline-none transition-all" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="bg-semantic-pain/10 text-semantic-pain rounded-xl p-3 text-sm">@_error</div>
+            }
+
+            <button type="submit" disabled="@_loading"
+                    class="btn-gradient w-full rounded-xl px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                @(_loading ? "Iniciando sesión..." : "Iniciar sesión")
+            </button>
+        </EditForm>
+
+        <div class="relative my-5">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-surface-border"></div>
+            </div>
+            <div class="relative flex justify-center text-xs">
+                <span class="bg-surface-card px-3 text-txt-muted">o continúa con</span>
+            </div>
+        </div>
+
+        <div class="flex justify-center">
+            <div id="g_id_signin"></div>
+        </div>
+
+        @if (_googleLoading)
+        {
+            <div class="flex justify-center mt-3">
+                <div class="w-4 h-4 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
+            </div>
+        }
+
+        <p class="mt-4 text-center text-sm text-txt-muted">
+            ¿No tienes cuenta?
+            <a href="/register" class="text-semantic-system hover:text-semantic-highlight font-medium transition-colors">
+                Créala aquí
+            </a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private LoginModel _model = new();
+    private string _error = "";
+    private bool _loading;
+    private bool _googleLoading;
+    private DotNetObjectReference<Login>? _dotNetRef;
+
+    private class LoginModel
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (Auth.User is not null)
+            {
+                Nav.NavigateTo("/dashboard");
+                return;
+            }
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+            var clientId = Configuration["Google:ClientId"] ?? "";
+            if (!string.IsNullOrEmpty(clientId) && !clientId.StartsWith("YOUR_"))
+            {
+                await Task.Delay(300);
+                await JS.InvokeVoidAsync("googleSignIn.initialize", clientId, _dotNetRef);
+                await JS.InvokeVoidAsync("googleSignIn.prompt");
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnGoogleSignIn(string idToken)
+    {
+        _error = "";
+        _googleLoading = true;
+        StateHasChanged();
+        try
+        {
+            await Auth.LoginWithGoogleAsync(idToken);
+            Nav.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _googleLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _error = "";
+        _loading = true;
+        try
+        {
+            await Auth.LoginAsync(_model.Email, _model.Password);
+            Nav.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+}

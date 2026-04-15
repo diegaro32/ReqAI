@@ -1,0 +1,397 @@
+@page "/search"
+@using PainFinder.Web.Models
+@implements IDisposable
+
+<AuthGuard>
+    <div class="mb-8">
+        <h1 class="text-2xl font-semibold text-txt-primary">Búsqueda Rápida</h1>
+        <p class="text-sm text-txt-muted mt-1">Escanea comunidades online en busca de problemas reales</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        @* Form Panel *@
+        <div class="lg:col-span-1">
+            <div class="glass-card p-6 space-y-5">
+                <div>
+                    <label class="block text-[13px] font-medium text-txt-secondary mb-1.5">¿Qué problema estás buscando?</label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-txt-muted">
+                            <Icon Name="radar" Size="18" StrokeWidth="1.5" />
+                        </div>
+                        <input type="text" @bind="_keyword"
+                               placeholder="billing, invoicing, CRM, inventory..."
+                               class="block w-full rounded-xl bg-surface-bg/80 border border-surface-border pl-10 pr-4 py-3 text-[14px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-highlight focus:ring-2 focus:ring-semantic-highlight/30 focus:shadow-[0_0_16px_rgba(6,182,212,0.15)] focus:outline-none transition-all" />
+                    </div>
+                </div>
+
+                <SourceChipSelector @bind-Selected="_selectedSources" />
+
+                <div>
+                    <label class="block text-[12px] font-medium text-txt-muted mb-1">Período de tiempo</label>
+                    <select @bind="_timePeriod"
+                            class="block w-full rounded-lg bg-surface-bg/80 border border-surface-border px-3 py-2 text-[12px] text-txt-primary focus:border-semantic-highlight focus:ring-1 focus:ring-semantic-highlight/50 focus:outline-none transition-all">
+                        <option value="7">Última semana</option>
+                        <option value="30">Último mes</option>
+                        <option value="60">Últimos 2 meses</option>
+                        <option value="90">Últimos 3 meses</option>
+                        <option value="180">Últimos 6 meses</option>
+                        <option value="365">Último año</option>
+                    </select>
+                </div>
+
+                <button type="button" @onclick="HandleSubmit" disabled="@_loading"
+                        class="btn-gradient w-full px-4 py-3 text-[14px] flex items-center justify-center gap-2">
+                    @if (_loading)
+                    {
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Escaneando...</span>
+                    }
+                    else
+                    {
+
+                        <span>Analizar Fuentes</span>
+                    }
+                </button>
+
+                @if (!string.IsNullOrEmpty(_message))
+                {
+                    <div class="rounded-xl p-3 text-[13px] @(_message.StartsWith("✅") ? "bg-semantic-opportunity/10 text-semantic-opportunity" : _message.StartsWith("⚠") ? "bg-semantic-cluster/10 text-semantic-cluster" : "bg-semantic-pain/10 text-semantic-pain")">
+                        @_message
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* History Panel *@
+        <div class="lg:col-span-2">
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 class="text-[15px] font-semibold text-txt-primary">Historial de Búsquedas</h2>
+                    <button @onclick="Refresh" class="flex items-center gap-1.5 text-[11px] text-txt-muted hover:text-semantic-system transition-colors">
+                        <Icon Name="refresh-cw" Size="12" StrokeWidth="1.5" /> Actualizar
+                    </button>
+                </div>
+
+                @if (_loading && _runs.Count == 0)
+                {
+                    <RadarLoader Message="Iniciando búsqueda..." />
+                }
+
+                @if (!_loading && _runs.Count == 0)
+                {
+                    <div class="text-center py-12">
+                        <Icon Name="radar" Size="32" Class="text-txt-muted/50 mx-auto mb-3" StrokeWidth="1" />
+                        <p class="text-txt-muted text-sm">Sin búsquedas aún. Inicia tu primer escaneo.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-3">
+                        @foreach (var run in _runs)
+                        {
+                            var sources = run.Sources.Split(',', StringSplitOptions.TrimEntries);
+                            var isRunning = new[] { "Expanding", "Scraping", "Analyzing", "Pending" }.Contains(run.Status);
+
+                            <div class="group relative rounded-xl bg-surface-card/80 p-4 transition-all duration-200 hover:bg-surface-hover/60 overflow-hidden">
+
+                                @* Animated gradient top bar for active runs *@
+                                @if (isRunning)
+                                {
+                                    <div class="absolute top-0 left-0 right-0 h-[2px] rounded-t-xl overflow-hidden">
+                                        <div class="h-full w-full bg-gradient-to-r from-transparent via-semantic-highlight to-transparent animate-[shimmer_2s_linear_infinite]"
+                                             style="background-size:200% 100%"></div>
+                                    </div>
+                                }
+
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2.5 mb-2">
+                                            <p class="font-semibold text-[14px] text-txt-primary truncate">@run.Keyword</p>
+                                            <StatusBadge Status="@run.Status" />
+                                        </div>
+
+                                        @* Phase stepper — only visible while running *@
+                                        @if (isRunning)
+                                        {
+                                            var phases = new[]
+                                            {
+                                                ("Expanding", "🔤", "Expandiendo keywords"),
+                                                ("Scraping",  "🕸️", "Recopilando datos"),
+                                                ("Analyzing", "🧠", "Analizando dolores"),
+                                            };
+                                            var currentPhaseIndex = run.Status switch
+                                            {
+                                                "Pending"   => -1,
+                                                "Expanding" => 0,
+                                                "Scraping"  => 1,
+                                                "Analyzing" => 2,
+                                                _           => -1
+                                            };
+                                            <div class="flex items-center gap-0 mb-3 mt-1">
+                                                @for (var p = 0; p < phases.Length; p++)
+                                                {
+                                                    var (pStatus, pIcon, pLabel) = phases[p];
+                                                    var isDone    = p < currentPhaseIndex;
+                                                    var isActive  = p == currentPhaseIndex;
+                                                    var isPending = p > currentPhaseIndex;
+
+                                                    <div class="flex items-center @(p < phases.Length - 1 ? "flex-1" : "")">
+                                                        <div class="flex flex-col items-center gap-1 min-w-[60px]">
+                                                            <div class="@(isDone ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : isActive ? "bg-semantic-highlight/15 border-semantic-highlight/40 text-semantic-highlight animate-pulse" : "bg-surface-hover/40 border-surface-border/40 text-txt-muted/40") w-8 h-8 rounded-full border flex items-center justify-center text-[14px] transition-all">
+                                                                @if (isDone)
+                                                                {
+                                                                    <span class="text-[12px]">✓</span>
+                                                                }
+                                                                else if (isActive)
+                                                                {
+                                                                    <div class="w-3.5 h-3.5 border-2 border-semantic-highlight/40 border-t-semantic-highlight rounded-full animate-spin"></div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span>@pIcon</span>
+                                                                }
+                                                            </div>
+                                                            <span class="text-[9px] font-medium @(isDone ? "text-emerald-400" : isActive ? "text-semantic-highlight" : "text-txt-muted/40") text-center leading-tight">@pLabel</span>
+                                                        </div>
+                                                        @if (p < phases.Length - 1)
+                                                        {
+                                                            <div class="flex-1 h-[1px] mb-4 mx-1 @(isDone ? "bg-emerald-500/40" : "bg-surface-border/30")"></div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+
+                                        @* Expanded keyword pills (completed runs) *@
+                                        @if (!string.IsNullOrEmpty(run.ExpandedKeywords) && !isRunning)
+                                        {
+                                            var allPhrases = run.ExpandedKeywords.Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                                            var visible = allPhrases.Take(3);
+                                            var remaining = allPhrases.Length - 3;
+                                            <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
+                                                @foreach (var phrase in visible)
+                                                {
+                                                    <span class="inline-flex items-center gap-1 rounded-lg border border-semantic-system/20 bg-semantic-system/5 text-semantic-system px-2.5 py-1 text-[10px] font-medium tracking-wide">
+                                                        <Icon Name="hash" Size="10" StrokeWidth="2" />@phrase
+                                                    </span>
+                                                }
+                                                @if (remaining > 0)
+                                                {
+                                                    <span class="inline-flex items-center rounded-lg border border-surface-border/50 bg-surface-hover/40 text-txt-muted px-2.5 py-1 text-[10px] font-medium">
+                                                        +@remaining más
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+
+                                        <div class="flex items-center gap-1 mb-2.5 flex-wrap">
+                                            @foreach (var s in sources.Take(5))
+                                            {
+                                                <span class="w-6 h-6 rounded-md bg-surface-bg/60 flex items-center justify-center" title="@s">
+                                                    <SourceIcon Name="@s" ShowLabel="false" Size="12" />
+                                                </span>
+                                            }
+                                            @if (sources.Length > 5)
+                                            {
+                                                <span class="text-[10px] text-txt-muted ml-0.5">+@(sources.Length - 5)</span>
+                                            }
+                                        </div>
+                                        <div class="flex items-center gap-3 text-[11px] text-txt-muted">
+                                            <span class="flex items-center gap-1">
+                                                <Icon Name="file-text" Size="12" /> @run.DocumentsCollected docs
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <Icon Name="alert-triangle" Size="12" Class="text-semantic-pain/50" /> @run.PainsDetected señales
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <Icon Name="clock" Size="12" /> @run.StartedAt.ToLocalTime().ToShortDateString()
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        <a href="/search/@run.Id"
+                                           class="flex items-center gap-1 text-[11px] text-semantic-system bg-semantic-system/8 hover:bg-semantic-system/15 px-2.5 py-1.5 rounded-lg transition-colors">
+                                            Detalles <Icon Name="arrow-right" Size="12" />
+                                        </a>
+                                        <button @onclick="() => _pendingDeleteRun = run"
+                                                class="flex items-center text-txt-muted hover:text-semantic-pain p-1.5 rounded-lg hover:bg-semantic-pain/8 transition-colors" title="Eliminar">
+                                            <Icon Name="trash-2" Size="14" StrokeWidth="1.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</AuthGuard>
+
+@* ── Delete confirmation modal ── *@
+@if (_pendingDeleteRun is not null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         @onclick="() => _pendingDeleteRun = null">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative z-10 w-full rounded-2xl bg-surface-card border border-surface-border/60 shadow-2xl p-6 space-y-5"
+             style="max-width: 420px"
+             @onclick:stopPropagation>
+            <div class="flex items-start gap-3">
+                <div class="shrink-0 rounded-xl bg-semantic-pain/15 border border-semantic-pain/25 p-2.5">
+                    <Icon Name="trash-2" Size="20" StrokeWidth="1.5" Class="text-semantic-pain" />
+                </div>
+                <div>
+                    <h3 class="text-[15px] font-bold text-txt-primary">¿Eliminar esta búsqueda?</h3>
+                    <p class="text-[13px] text-txt-muted mt-1 leading-relaxed">
+                        Se eliminarán permanentemente todos los documentos, señales de dolor y oportunidades asociadas.
+                        Esta acción no se puede deshacer.
+                    </p>
+                </div>
+            </div>
+
+            <div class="rounded-xl bg-surface-bg/60 border border-surface-border/40 px-4 py-3">
+                <p class="text-[12px] font-semibold text-txt-primary truncate">@_pendingDeleteRun.Keyword</p>
+                <p class="text-[11px] text-txt-muted mt-0.5">
+                    @_pendingDeleteRun.DocumentsCollected docs · @_pendingDeleteRun.PainsDetected señales · @_pendingDeleteRun.StartedAt.ToString("dd MMM yyyy")
+                </p>
+            </div>
+
+            <div class="flex gap-3 pt-1">
+                <button @onclick="() => _pendingDeleteRun = null"
+                        class="flex-1 rounded-xl border border-surface-border/60 bg-surface-hover/40 px-4 py-2.5 text-[13px] font-semibold text-txt-secondary hover:bg-surface-hover/70 transition-colors">
+                    Cancelar
+                </button>
+                <button @onclick="ConfirmDelete" disabled="@_deleting"
+                        class="flex-1 rounded-xl bg-semantic-pain px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors flex items-center justify-center gap-2">
+                    @if (_deleting)
+                    {
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Eliminando...</span>
+                    }
+                    else
+                    {
+                        <span>Sí, eliminar</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private ISearchRunService SearchRunService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!
+;
+    [SupplyParameterFromQuery(Name = "keyword")] public string? InitialKeyword { get; set; }
+
+    private string _keyword = "";
+    private List<string> _selectedSources = new(SourceData.AllSourceNames);
+    private int _timePeriod = 30;
+    private string _message = "";
+    private bool _loading;
+    private bool _deleting;
+    private SearchRunDto? _pendingDeleteRun;
+    private List<SearchRunDto> _runs = [];
+    private Timer? _pollingTimer;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!string.IsNullOrWhiteSpace(InitialKeyword))
+                _keyword = InitialKeyword;
+
+            await Refresh();
+        }
+    }
+
+    private async Task Refresh()
+    {
+        if (Auth.User is null) return;
+        try { _runs = (await SearchRunService.GetAllSearchRunsAsync(Auth.User.Id)).ToList(); }
+        catch { }
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(_keyword) || _selectedSources.Count == 0)
+        {
+            _message = "⚠️ Ingresa una keyword y selecciona al menos una fuente.";
+            return;
+        }
+
+        _loading = true;
+        _message = "";
+        try
+        {
+            await SearchRunService.StartSearchRunAsync(new SearchRunRequest(
+                    _selectedSources, _keyword.Trim(),
+                    DateTime.UtcNow.AddDays(-_timePeriod), DateTime.UtcNow), Auth.User!.Id);
+            _message = "✅ ¡Búsqueda iniciada! Los resultados aparecerán a continuación en unos momentos.";
+            _keyword = "";
+            await Refresh();
+            StartPolling();
+        }
+        catch (Exception ex)
+        {
+            _message = $"❌ Error: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void StartPolling()
+    {
+        _pollingTimer?.Dispose();
+        _pollingTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await Refresh();
+
+                var hasActiveRuns = _runs.Any(r =>
+                    r.Status == "Pending" || r.Status == "Expanding" || r.Status == "Scraping" || r.Status == "Analyzing");
+
+                if (!hasActiveRuns)
+                    _pollingTimer?.Dispose();
+            });
+        }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (Auth.User is null || _pendingDeleteRun is null) return;
+        _deleting = true;
+        try
+        {
+            await SearchRunService.DeleteSearchRunAsync(_pendingDeleteRun.Id, Auth.User.Id);
+            _pendingDeleteRun = null;
+            await Refresh();
+        }
+        catch { }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+
+    private async Task DeleteRun(Guid id)
+    {
+        if (Auth.User is null) return;
+        try
+        {
+            await SearchRunService.DeleteSearchRunAsync(id, Auth.User.Id);
+            await Refresh();
+        }
+        catch { }
+    }
+
+    public void Dispose()
+    {
+        _pollingTimer?.Dispose();
+    }
+}

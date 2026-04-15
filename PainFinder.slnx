@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/PainFinder.Api/PainFinder.Api.csproj" />
+    <Project Path="backend/PainFinder.Application/PainFinder.Application.csproj" />
+    <Project Path="backend/PainFinder.Domain/PainFinder.Domain.csproj" />
+    <Project Path="backend/PainFinder.Infrastructure/PainFinder.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/frontend/">
+    <Project Path="frontend/PainFinder.Web/PainFinder.Web.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="shared/PainFinder.Shared/PainFinder.Shared.csproj" />
+  </Folder>
+</Solution>

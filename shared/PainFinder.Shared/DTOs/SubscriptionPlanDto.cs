@@ -1,0 +1,41 @@
+namespace PainFinder.Shared.DTOs;
+
+public record SubscriptionPlanDto(
+    Guid Id,
+    string PlanType,
+    string BillingCycle,
+    DateTime StartedAt,
+    DateTime? ExpiresAt,
+    DateTime? CancelledAt,
+    bool IsActive,
+    bool IsCancelled,
+    int DaysRemaining,
+    DateTime? NextBillingDate,
+    decimal CurrentPrice,
+    decimal MonthlyPrice,
+    decimal AnnualPrice,
+    decimal EffectiveMonthlyPrice,
+    int AnnualDiscountPercent,
+    int SearchesUsedThisMonth,
+    int MaxSearchesPerMonth,
+    int MvpsUsedThisMonth,
+    int MaxMvpsPerMonth,
+    int MonitorsUsed,
+    int MaxRadarMonitors,
+    int MaxPainsPerSearch,
+    bool CanExport,
+    bool CanSearch,
+    bool CanGenerateMvp,
+    DateTime CurrentPeriodStart);
+
+public record PlanPricingDto(
+    string PlanType,
+    decimal MonthlyPrice,
+    decimal AnnualPrice,
+    decimal EffectiveMonthlyPrice,
+    int AnnualDiscountPercent,
+    int MaxSearchesPerMonth,
+    int MaxMvpsPerMonth,
+    int MaxRadarMonitors,
+    int MaxPainsPerSearch,
+    bool CanExport);

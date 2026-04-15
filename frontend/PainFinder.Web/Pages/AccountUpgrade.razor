@@ -1,0 +1,216 @@
+@page "/account/upgrade"
+
+<AuthGuard>
+    @if (_loading)
+    {
+        <div class="flex items-center justify-center min-h-[40vh]">
+            <div class="flex items-center gap-3 text-txt-secondary">
+                <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
+                <span class="text-sm">Cargando planes...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-8">
+            <a href="/account" class="text-txt-muted hover:text-semantic-highlight transition-colors text-sm">← Volver a la Cuenta</a>
+            <h1 class="text-2xl font-semibold text-txt-primary mt-3">Elige Tu Plan</h1>
+            <p class="text-sm text-txt-muted mt-1">
+                @if (_currentPlan is not null)
+                {
+                    <span>Estás actualmente en el plan <strong class="text-txt-secondary">@_currentPlan.PlanType</strong>.</span>
+                }
+                else
+                {
+                    <span>Elige el plan que se adapte a tu flujo de trabajo.</span>
+                }
+            </p>
+        </div>
+
+        <div class="flex items-center justify-center gap-3 mb-8">
+            <span class="text-sm @(_annual ? "text-txt-muted" : "text-txt-primary font-semibold")">Mensual</span>
+            <button @onclick="() => _annual = !_annual"
+                    class="relative w-12 h-6 rounded-full transition-colors @(_annual ? "bg-semantic-system" : "bg-surface-border")">
+                <div class="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform @(_annual ? "translate-x-6" : "translate-x-0.5")"></div>
+            </button>
+            <span class="text-sm @(_annual ? "text-txt-primary font-semibold" : "text-txt-muted")">Anual</span>
+            <span class="rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2.5 py-0.5 text-[10px] font-bold">Ahorra 20%</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <div class="rounded-xl p-3 text-[13px] mb-6 @(_message.StartsWith("✅") ? "bg-semantic-opportunity/10 text-semantic-opportunity" : "bg-semantic-pain/10 text-semantic-pain")">
+                @_message
+            </div>
+        }
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            @foreach (var plan in _plans)
+            {
+                var isPopular = plan.PlanType == "Pro";
+                var isCurrent = _currentPlan?.PlanType == plan.PlanType;
+                var effectiveMonthly = _annual ? plan.EffectiveMonthlyPrice : plan.MonthlyPrice;
+                var totalPrice = _annual ? plan.AnnualPrice : plan.MonthlyPrice;
+
+                <div class="glass-card p-6 border @(isPopular ? "border-semantic-system/50 ring-1 ring-semantic-system/20" : isCurrent ? "border-semantic-opportunity/40 ring-1 ring-semantic-opportunity/20" : "border-surface-border/40") relative flex flex-col">
+                    @if (isPopular)
+                    {
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-semantic-system px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                            Más Popular
+                        </div>
+                    }
+                    @if (isCurrent)
+                    {
+                        <div class="absolute -top-3 right-4 rounded-full bg-semantic-opportunity px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
+                            Actual
+                        </div>
+                    }
+
+                    <h3 class="text-base font-bold text-txt-primary">@plan.PlanType</h3>
+                    <div class="mt-3 mb-1">
+                        <span class="text-3xl font-bold text-txt-primary">$@effectiveMonthly</span>
+                        <span class="text-sm text-txt-muted">/mo</span>
+                    </div>
+                    @if (_annual && plan.MonthlyPrice > 0)
+                    {
+                        <p class="text-[11px] text-semantic-opportunity mb-3">$@totalPrice facturado anualmente</p>
+                    }
+                    else
+                    {
+                        <p class="text-[11px] text-txt-muted mb-3">@(plan.MonthlyPrice == 0 ? "Gratis para siempre" : "Facturado mensualmente")</p>
+                    }
+
+                    <ul class="space-y-2 mb-6 flex-1">
+                        <li class="flex items-start gap-2 text-xs text-txt-secondary">
+                            <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
+                            @(plan.MaxSearchesPerMonth < 0 ? "Ilimitadas" : plan.MaxSearchesPerMonth.ToString()) búsquedas@(plan.MonthlyPrice == 0 ? " (pago único)" : "/mes")
+                        </li>
+                        <li class="flex items-start gap-2 text-xs text-txt-secondary">
+                            <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
+                            @(plan.MaxMvpsPerMonth < 0 ? "Ilimitados" : plan.MaxMvpsPerMonth.ToString()) planes de acción@(plan.MonthlyPrice == 0 ? " (pago único)" : "/mes")
+                        </li>
+                        <li class="flex items-start gap-2 text-xs text-txt-secondary">
+                            <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
+                            @(plan.MaxPainsPerSearch < 0 ? "Ilimitadas" : plan.MaxPainsPerSearch.ToString()) señales de dolor/búsqueda
+                        </li>
+                        <li class="flex items-start gap-2 text-xs text-txt-secondary">
+                            <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
+                            @(plan.MaxRadarMonitors < 0 ? "Ilimitados" : plan.MaxRadarMonitors.ToString()) monitores Radar
+                        </li>
+                        @if (plan.CanExport)
+                        {
+                            <li class="flex items-start gap-2 text-xs text-txt-secondary">
+                                <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
+                                Exportar resultados
+                            </li>
+                        }
+                    </ul>
+
+                    @if (isCurrent)
+                    {
+                        <div class="block text-center rounded-xl py-2.5 text-sm font-semibold bg-surface-hover/60 text-txt-muted border border-surface-border/60 cursor-default">
+                            Plan Actual
+                        </div>
+                    }
+                    else if (plan.MonthlyPrice == 0)
+                    {
+                        <button @onclick="() => HandleSelectPlan(plan.PlanType)" disabled="@_upgrading"
+                                class="block text-center rounded-xl py-2.5 text-sm font-semibold bg-surface-hover/60 text-txt-primary hover:bg-surface-hover border border-surface-border/60 transition-colors disabled:opacity-50">
+                            Bajar a Gratis
+                        </button>
+                    }
+                    else
+                    {
+                        <button @onclick="() => HandleSelectPlan(plan.PlanType)" disabled="@_upgrading"
+                                class="block w-full text-center rounded-xl py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 @(isPopular ? "bg-semantic-system text-white hover:bg-[#4F46E5]" : "bg-surface-hover/60 text-txt-primary hover:bg-surface-hover border border-surface-border/60")">
+                            @(_upgrading ? "Procesando..." : GetButtonLabel(plan.PlanType))
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</AuthGuard>
+
+@code {
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private ISubscriptionService SubscriptionService { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private SubscriptionPlanDto? _currentPlan;
+    private List<PlanPricingDto> _plans = [];
+    private bool _loading = true;
+    private bool _annual;
+    private bool _upgrading;
+    private string? _message;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (Auth.User is not null)
+                {
+                    _currentPlan = await SubscriptionService.GetUserPlanAsync(Auth.User.Id);
+                    _plans = SubscriptionService.GetAllPlanPricing();
+                    _annual = _currentPlan.BillingCycle == "Annual";
+                }
+            }
+            catch (Exception ex)
+            {
+                _message = $"❌ {ex.Message}";
+            }
+            finally
+            {
+                _loading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleSelectPlan(string planType)
+    {
+        if (Auth.User is null) return;
+
+        _upgrading = true;
+        _message = null;
+        StateHasChanged();
+
+        try
+        {
+            var billingCycle = _annual ? "Annual" : "Monthly";
+            await SubscriptionService.UpgradeAsync(Auth.User.Id, planType, billingCycle);
+            _currentPlan = await SubscriptionService.GetUserPlanAsync(Auth.User.Id);
+            _message = $"✅ ¡Plan {planType} activado correctamente!";
+        }
+        catch (Exception ex)
+        {
+            _message = $"❌ {ex.Message}";
+        }
+        finally
+        {
+            _upgrading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetButtonLabel(string planType)
+    {
+        if (_currentPlan is null) return "Comenzar";
+
+        var currentIndex = PlanOrder(_currentPlan.PlanType);
+        var targetIndex = PlanOrder(planType);
+
+        return targetIndex > currentIndex ? $"Mejorar a {planType}" : $"Cambiar a {planType}";
+    }
+
+    private static int PlanOrder(string plan) => plan switch
+    {
+        "Free" => 0,
+        "Starter" => 1,
+        "Pro" => 2,
+        "Agency" => 3,
+        _ => 0
+    };
+}

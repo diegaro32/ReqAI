@@ -1,0 +1,47 @@
+@using PainFinder.Web.Models
+
+<div class="space-y-2">
+    <div class="flex justify-between items-center">
+        <span class="text-[13px] font-medium text-txt-secondary">
+            Fuentes
+            <span class="ml-1.5 text-[11px] text-txt-muted">@Selected.Count/@SourceData.AllSourceNames.Count</span>
+        </span>
+        <button type="button" @onclick="ToggleAll"
+                class="text-[11px] text-semantic-system hover:text-semantic-highlight font-medium transition-colors">
+            @(AllSelected ? "Quitar todo" : "Seleccionar todo")
+        </button>
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+        @foreach (var source in SourceData.Sources)
+        {
+            var isActive = Selected.Contains(source.Name);
+            <button type="button" @onclick="() => Toggle(source.Name)"
+                    class="source-chip @(isActive ? "source-chip-active" : "")">
+                <SourceIcon Name="@source.Name" ShowLabel="false" Size="12" />
+                <span>@source.Name</span>
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<string> Selected { get; set; } = new();
+    [Parameter] public EventCallback<List<string>> SelectedChanged { get; set; }
+
+    private bool AllSelected => Selected.Count == SourceData.AllSourceNames.Count;
+
+    private async Task Toggle(string name)
+    {
+        var updated = Selected.Contains(name)
+            ? Selected.Where(s => s != name).ToList()
+            : [..Selected, name];
+        await SelectedChanged.InvokeAsync(updated);
+    }
+
+    private async Task ToggleAll()
+    {
+        var updated = AllSelected ? new List<string>() : new List<string>(SourceData.AllSourceNames);
+        await SelectedChanged.InvokeAsync(updated);
+    }
+}

@@ -1,0 +1,331 @@
+@page "/account"
+
+<AuthGuard>
+    @if (_loading)
+    {
+        <div class="flex items-center justify-center min-h-[40vh]">
+            <div class="flex items-center gap-3 text-txt-secondary">
+                <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
+                <span class="text-sm">Cargando cuenta...</span>
+            </div>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="glass-card p-6 m-8 border-semantic-pain/30">
+            <h2 class="text-lg font-semibold text-semantic-pain mb-2">Error al cargar la cuenta</h2>
+            <pre class="text-xs text-txt-muted whitespace-pre-wrap break-all">@_error</pre>
+        </div>
+    }
+    else
+    {
+        <div class="mb-8">
+            <h1 class="text-2xl font-semibold text-txt-primary">Cuenta</h1>
+            <p class="text-sm text-txt-muted mt-1">Gestiona tu perfil y suscripción</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            @* ── Profile Card ── *@
+            <div class="glass-card p-6 lg:col-span-1">
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="w-14 h-14 rounded-2xl bg-semantic-system/10 border border-semantic-system/20 flex items-center justify-center text-2xl font-bold text-semantic-system">
+                        @(Auth.User!.FullName[..1].ToUpper())
+                    </div>
+                    <div>
+                        <h2 class="text-[15px] font-semibold text-txt-primary">@Auth.User.FullName</h2>
+                        <p class="text-xs text-txt-muted">@Auth.User.Email</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-4 border-t border-surface-border/30">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-txt-muted">Miembro desde</span>
+                        <span class="text-txt-secondary font-medium">@Auth.User.CreatedAt.ToString("MMM yyyy")</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-txt-muted">ID de Usuario</span>
+                        <span class="text-txt-secondary font-mono text-[10px]">@Auth.User.Id.ToString()[..8]…</span>
+                    </div>
+                </div>
+            </div>
+
+            @* ── Current Plan Card ── *@
+            @if (_plan is not null)
+            {
+                <div class="glass-card p-6 lg:col-span-2">
+                    <div class="flex items-start justify-between mb-5">
+                        <div>
+                            <h2 class="text-[15px] font-semibold text-txt-primary">Plan Actual</h2>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold @PlanBadgeClass(_plan.PlanType)">
+                                    @PlanIcon(_plan.PlanType) @_plan.PlanType
+                                </span>
+                                @if (_plan.IsActive && _plan.PlanType != "Free")
+                                {
+                                    <span class="rounded-full bg-emerald-500/15 text-emerald-400 px-2 py-0.5 text-[10px] font-bold">Activo</span>
+                                }
+                                @if (_plan.IsCancelled)
+                                {
+                                    <span class="rounded-full bg-semantic-pain/15 text-semantic-pain px-2 py-0.5 text-[10px] font-bold">Cancelado</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            @if (_plan.PlanType != "Free")
+                            {
+                                <div class="text-2xl font-bold text-txt-primary">$@_plan.EffectiveMonthlyPrice<span class="text-sm text-txt-muted font-normal">/mo</span></div>
+                                <p class="text-[11px] text-txt-muted">
+                                    @(_plan.BillingCycle == "Annual" ? $"${_plan.CurrentPrice} facturado anualmente" : "Facturado mensualmente")
+                                </p>
+                            }
+                            else
+                            {
+                                <div class="text-2xl font-bold text-txt-primary">Gratis</div>
+                                <p class="text-[11px] text-txt-muted">Para siempre</p>
+                            }
+                        </div>
+                    </div>
+
+                    @if (_plan.PlanType != "Free")
+                    {
+                        <div class="grid grid-cols-2 gap-3 mb-5">
+                            @if (_plan.NextBillingDate is not null && !_plan.IsCancelled)
+                            {
+                                <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3">
+                                    <span class="text-[10px] font-semibold text-txt-muted uppercase tracking-wider">Próxima facturación</span>
+                                    <p class="text-sm font-medium text-txt-primary mt-0.5">@_plan.NextBillingDate.Value.ToString("MMM dd, yyyy")</p>
+                                </div>
+                            }
+                            @if (_plan.IsCancelled && _plan.ExpiresAt is not null)
+                            {
+                                <div class="rounded-lg bg-semantic-pain/5 border border-semantic-pain/20 p-3">
+                                    <span class="text-[10px] font-semibold text-semantic-pain uppercase tracking-wider">Acceso hasta</span>
+                                    <p class="text-sm font-medium text-txt-primary mt-0.5">@_plan.ExpiresAt.Value.ToString("MMM dd, yyyy") (@_plan.DaysRemaining días restantes)</p>
+                                </div>
+                            }
+                            <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3">
+                                <span class="text-[10px] font-semibold text-txt-muted uppercase tracking-wider">Inicio del período</span>
+                                <p class="text-sm font-medium text-txt-primary mt-0.5">@_plan.CurrentPeriodStart.ToString("MMM dd, yyyy")</p>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="flex flex-wrap gap-2 pt-4 border-t border-surface-border/30">
+                        @if (_plan.PlanType == "Free")
+                        {
+                            <a href="/account/upgrade"
+                               class="rounded-xl bg-semantic-system px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4F46E5] transition-colors">
+                                Mejorar Plan
+                            </a>
+                        }
+                        else if (!_plan.IsCancelled)
+                        {
+                            <a href="/account/upgrade"
+                               class="rounded-xl bg-surface-hover/60 border border-surface-border/60 px-5 py-2.5 text-sm font-medium text-txt-primary hover:bg-surface-hover transition-colors">
+                                Cambiar Plan
+                            </a>
+                            <button @onclick="HandleCancel" disabled="@_cancelling"
+                                    class="rounded-xl bg-semantic-pain/10 border border-semantic-pain/20 px-5 py-2.5 text-sm font-medium text-semantic-pain hover:bg-semantic-pain/20 transition-colors disabled:opacity-50">
+                                @(_cancelling ? "Cancelando..." : "Cancelar Suscripción")
+                            </button>
+                        }
+                        else
+                        {
+                            <a href="/account/upgrade"
+                               class="rounded-xl bg-semantic-system px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4F46E5] transition-colors">
+                                Resuscribirse
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ── Usage Section ── *@
+        @if (_plan is not null)
+        {
+            <div class="mt-6">
+                <h2 class="text-[15px] font-semibold text-txt-primary mb-4">Uso en Este Período</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    @* Searches *@
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-semantic-system/10 flex items-center justify-center">
+                                    <Icon Name="search" Size="16" Class="text-semantic-system" StrokeWidth="1.5" />
+                                </div>
+                                <span class="text-sm font-medium text-txt-primary">Búsquedas</span>
+                            </div>
+                            <span class="text-xs text-txt-muted">
+                                @_plan.SearchesUsedThisMonth / @(_plan.MaxSearchesPerMonth < 0 ? "∞" : _plan.MaxSearchesPerMonth.ToString())
+                            </span>
+                        </div>
+                        <div class="w-full bg-surface-border/40 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all @UsageBarColor(SearchUsagePercent)"
+                                 style="width: @(Math.Min(SearchUsagePercent, 100))%"></div>
+                        </div>
+                        @if (!_plan.CanSearch)
+                        {
+                            <p class="text-[11px] text-semantic-pain mt-2">
+                                @(_plan.PlanType == "Free" ? "Límite del plan gratuito alcanzado." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para más búsquedas.
+                            </p>
+                        }
+                    </div>
+
+                    @* Action Plans *@
+                    <div class="glass-card p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center">
+                                    <Icon Name="zap" Size="16" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                                </div>
+                                <span class="text-sm font-medium text-txt-primary">Planes de Acción</span>
+                            </div>
+                            <span class="text-xs text-txt-muted">
+                                @_plan.MvpsUsedThisMonth / @(_plan.MaxMvpsPerMonth < 0 ? "∞" : _plan.MaxMvpsPerMonth.ToString())
+                            </span>
+                        </div>
+                        <div class="w-full bg-surface-border/40 rounded-full h-2">
+                            <div class="h-2 rounded-full transition-all @UsageBarColor(MvpUsagePercent)"
+                                 style="width: @(Math.Min(MvpUsagePercent, 100))%"></div>
+                        </div>
+                        @if (!_plan.CanGenerateMvp)
+                        {
+                            <p class="text-[11px] text-semantic-pain mt-2">
+                                @(_plan.PlanType == "Free" ? "Límite del plan gratuito alcanzado." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para más planes de acción.
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @* ── Plan Features ── *@
+            <div class="mt-6">
+                <h2 class="text-[15px] font-semibold text-txt-primary mb-4">Tu Plan Incluye</h2>
+                <div class="glass-card p-5">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-semantic-opportunity text-sm">✓</span>
+                            <span class="text-xs text-txt-secondary">@(_plan.MaxSearchesPerMonth < 0 ? "Ilimitadas" : _plan.MaxSearchesPerMonth.ToString()) búsquedas/mes</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-semantic-opportunity text-sm">✓</span>
+                            <span class="text-xs text-txt-secondary">@(_plan.MaxMvpsPerMonth < 0 ? "Ilimitados" : _plan.MaxMvpsPerMonth.ToString()) planes de acción/mes</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-semantic-opportunity text-sm">✓</span>
+                            <span class="text-xs text-txt-secondary">Reddit + HackerNews</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if (_plan.CanExport)
+                            {
+                                <span class="text-semantic-opportunity text-sm">✓</span>
+                                <span class="text-xs text-txt-secondary">Exportar resultados</span>
+                            }
+                            else
+                            {
+                                <span class="text-txt-muted text-sm">✗</span>
+                                <span class="text-xs text-txt-muted">Exportar resultados</span>
+                            }
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if (_plan.PlanType is "Pro" or "Agency")
+                            {
+                                <span class="text-semantic-opportunity text-sm">✓</span>
+                                <span class="text-xs text-txt-secondary">Soporte prioritario</span>
+                            }
+                            else
+                            {
+                                <span class="text-txt-muted text-sm">✗</span>
+                                <span class="text-xs text-txt-muted">Soporte prioritario</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</AuthGuard>
+
+@code {
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private ISubscriptionService SubscriptionService { get; set; } = default!;
+
+    private SubscriptionPlanDto? _plan;
+    private bool _loading = true;
+    private bool _cancelling;
+    private string? _error;
+
+    private double SearchUsagePercent => _plan is not null && _plan.MaxSearchesPerMonth > 0
+        ? (double)_plan.SearchesUsedThisMonth / _plan.MaxSearchesPerMonth * 100
+        : 0;
+
+    private double MvpUsagePercent => _plan is not null && _plan.MaxMvpsPerMonth > 0
+        ? (double)_plan.MvpsUsedThisMonth / _plan.MaxMvpsPerMonth * 100
+        : 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                if (Auth.User is not null)
+                    _plan = await SubscriptionService.GetUserPlanAsync(Auth.User.Id);
+            }
+            catch (Exception ex)
+            {
+                _error = ex.ToString();
+            }
+            finally
+            {
+                _loading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (Auth.User is null || _plan is null) return;
+
+        _cancelling = true;
+        try
+        {
+            _plan = await SubscriptionService.CancelAsync(Auth.User.Id);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _cancelling = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string PlanBadgeClass(string plan) => plan switch
+    {
+        "Starter" => "bg-blue-500/15 text-blue-400 border border-blue-500/20",
+        "Pro" => "bg-purple-500/15 text-purple-400 border border-purple-500/20",
+        "Agency" => "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+        _ => "bg-surface-hover text-txt-muted border border-surface-border"
+    };
+
+    private static string PlanIcon(string plan) => plan switch
+    {
+        "Starter" => "🚀",
+        "Pro" => "⚡",
+        "Agency" => "🏢",
+        _ => "🆓"
+    };
+
+    private static string UsageBarColor(double percent) => percent switch
+    {
+        >= 90 => "bg-semantic-pain",
+        >= 70 => "bg-yellow-400",
+        _ => "bg-semantic-system"
+    };
+}

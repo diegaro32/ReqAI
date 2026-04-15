@@ -1,0 +1,191 @@
+@page "/dashboard"
+
+<AuthGuard>
+    @if (_loading)
+    {
+        <div class="flex items-center justify-center min-h-[40vh]">
+            <div class="flex items-center gap-3 text-txt-secondary">
+                <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
+                <span class="text-sm">Cargando dashboard...</span>
+            </div>
+        </div>
+    }
+    else if (_error is not null)
+    {
+        <div class="glass-card p-6 m-8 border-semantic-pain/30">
+            <h2 class="text-lg font-semibold text-semantic-pain mb-2">Error al cargar el dashboard</h2>
+            <pre class="text-xs text-txt-muted whitespace-pre-wrap break-all">@_error</pre>
+        </div>
+    }
+    else if (_dashboard is not null)
+    {
+        <div class="mb-8">
+            <h1 class="text-2xl font-semibold text-txt-primary">Dashboard</h1>
+            <p class="text-sm text-txt-muted mt-1">Resumen de inteligencia en tiempo real</p>
+        </div>
+
+        @* Metrics *@
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <MetricCard LucideIcon="file-text" Label="Documentos analizados" Value="_dashboard.TotalDocuments" />
+            <MetricCard LucideIcon="alert-triangle" Label="Señales de dolor detectadas" Value="_dashboard.TotalPainSignals" Color="pain" />
+            <MetricCard LucideIcon="layers" Label="Clusters de dolor" Value="_dashboard.TotalClusters" Color="cluster" />
+            <MetricCard LucideIcon="lightbulb" Label="Oportunidades encontradas" Value="_dashboard.TotalOpportunities" Color="opportunity" />
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+            @* Top Clusters *@
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-[15px] font-semibold text-txt-primary">Top Clusters de Dolor</h2>
+                    <a href="/pains" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
+                        Ver todos <Icon Name="arrow-right" Size="12" />
+                    </a>
+                </div>
+                @if (_dashboard.TopClusters.Count == 0)
+                {
+                    <p class="text-txt-muted text-sm">
+                        Sin clusters aún. <a href="/search" class="text-semantic-system hover:text-semantic-highlight transition-colors">Realiza una búsqueda</a> para comenzar.
+                    </p>
+                }
+                else
+                {
+                    <div class="space-y-3">
+                        @foreach (var cluster in _dashboard.TopClusters)
+                        {
+                            <div class="glass-card glow-cluster p-4">
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <div>
+                                        <p class="font-medium text-[14px] text-txt-primary">@cluster.Title</p>
+                                        <p class="text-xs text-txt-muted mt-0.5">@cluster.Category · @cluster.DocumentCount docs</p>
+                                    </div>
+                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold @(cluster.SeverityScore > 0.7 ? "bg-semantic-pain/15 text-semantic-pain" : cluster.SeverityScore > 0.4 ? "bg-semantic-cluster/15 text-semantic-cluster" : "bg-semantic-opportunity/15 text-semantic-opportunity")">
+                                        @cluster.SeverityScore.ToString("F2")
+                                    </span>
+                                </div>
+                                <div class="w-full bg-surface-bg/80 rounded-full h-1">
+                                    <div class="h-1 rounded-full bg-gradient-to-r from-semantic-cluster to-semantic-pain transition-all"
+                                         style="width: @((cluster.SeverityScore * 100).ToString("F0"))%"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            @* Latest Opportunities *@
+            <div class="glass-card p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="text-[15px] font-semibold text-txt-primary">Últimas Oportunidades</h2>
+                    <a href="/opportunities" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
+                        Ver todas <Icon Name="arrow-right" Size="12" />
+                    </a>
+                </div>
+                @if (_dashboard.LatestOpportunities.Count == 0)
+                {
+                    <p class="text-txt-muted text-sm">Sin oportunidades aún.</p>
+                }
+                else
+                {
+                    <div class="space-y-3">
+                        @foreach (var opp in _dashboard.LatestOpportunities)
+                        {
+                            <div class="glass-card glow-opportunity p-4">
+                                <div class="flex justify-between items-start">
+                                    <p class="font-medium text-[14px] text-txt-primary">@opp.Title</p>
+                                    <span class="inline-flex items-center rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2 py-0.5 text-[11px] font-semibold shrink-0 ml-2">
+                                        @((opp.ConfidenceScore * 100).ToString("F0"))%
+                                    </span>
+                                </div>
+                                <p class="text-xs text-txt-muted mt-1">@opp.MarketCategory</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Recent Search Runs *@
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h2 class="text-[15px] font-semibold text-txt-primary">Búsquedas Recientes</h2>
+                <a href="/search" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
+                    Nueva búsqueda <Icon Name="arrow-right" Size="12" />
+                </a>
+            </div>
+            @if (_searchRuns.Count == 0)
+            {
+                <p class="text-txt-muted text-sm">
+                    Sin búsquedas aún. <a href="/search" class="text-semantic-system hover:text-semantic-highlight transition-colors">Inicia tu primera búsqueda</a>.
+                </p>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                    @foreach (var run in _searchRuns.Take(6))
+                    {
+                        var sources = run.Sources.Split(',', StringSplitOptions.TrimEntries);
+                        <a href="/search/@run.Id" class="glass-card glow-highlight p-4 block">
+                            <div class="flex items-start justify-between mb-2">
+                                <p class="font-medium text-[14px] text-txt-primary">@run.Keyword</p>
+                                <StatusBadge Status="@run.Status" />
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 mb-3">
+                                @foreach (var s in sources.Take(3))
+                                {
+                                    <SourceIcon Name="@s" Size="12" />
+                                }
+                                @if (sources.Length > 3)
+                                {
+                                    <span class="text-[11px] text-txt-muted">+@(sources.Length - 3)</span>
+                                }
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-txt-muted">
+                                <span class="flex items-center gap-1">
+                                    <Icon Name="file-text" Size="12" /> @run.DocumentsCollected
+                                    <span class="mx-1">·</span>
+                                    <Icon Name="alert-triangle" Size="12" Class="text-semantic-pain/60" /> @run.PainsDetected
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <Icon Name="clock" Size="12" /> @run.StartedAt.ToLocalTime().ToShortDateString()
+                                </span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    }
+</AuthGuard>
+
+@code {
+    [Inject] private IDashboardService DashboardService { get; set; } = default!;
+    [Inject] private ISearchRunService SearchRunService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+
+    private DashboardDto? _dashboard;
+    private List<SearchRunDto> _searchRuns = [];
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _dashboard = await DashboardService.GetDashboardAsync();
+                if (Auth.User is not null)
+                    _searchRuns = (await SearchRunService.GetAllSearchRunsAsync(Auth.User.Id)).ToList();
+            }
+            catch (Exception ex)
+            {
+                _error = ex.ToString();
+            }
+            finally
+            {
+                _loading = false;
+                StateHasChanged();
+            }
+        }
+    }
+}

@@ -1,0 +1,67 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QueryRadar — AI Intelligence Platform</title>
+    <base href="/" />
+    <link rel="icon" type="image/png" sizes="any" href="/images/favicon.png" />
+    <link rel="shortcut icon" href="/images/favicon.png" />
+
+    <!-- Google Fonts: Inter + JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS (compiled) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
+
+    <link rel="stylesheet" href="css/app.css" />
+    <HeadOutlet @rendermode="RenderMode.InteractiveServer" />
+</head>
+
+<body class="h-full font-sans antialiased bg-surface-bg text-txt-primary">
+    <Routes @rendermode="RenderMode.InteractiveServer" />
+
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        window.googleSignIn = {
+            initialize: function (clientId, dotNetRef) {
+                if (!google || !google.accounts) return;
+                google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: function (response) {
+                        dotNetRef.invokeMethodAsync('OnGoogleSignIn', response.credential);
+                    }
+                });
+            },
+            prompt: function () {
+                google.accounts.id.renderButton(
+                    document.getElementById('g_id_signin'),
+                    { theme: 'outline', size: 'large', width: '100%', text: 'signin_with', shape: 'pill' }
+                );
+            }
+        };
+
+        window.downloadFile = function (filename, contentType, base64) {
+            var link = document.createElement('a');
+            link.download = filename;
+            link.href = 'data:' + contentType + ';base64,' + base64;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+    </script>
+</body>
+
+</html>

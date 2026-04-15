@@ -1,0 +1,104 @@
+@inherits LayoutComponentBase
+@inject AuthService Auth
+
+@if (_initialized)
+{
+    @if (Auth.User is not null)
+    {
+        <NavBar />
+        <main class="ml-56 min-h-screen transition-all duration-300">
+            <div class="max-w-[1400px] mx-auto px-8 py-8">
+                <ErrorBoundary @ref="_errorBoundary">
+                    <ChildContent>
+                        @Body
+                    </ChildContent>
+                    <ErrorContent Context="ex">
+                        <div class="glass-card p-8 m-4 border border-semantic-pain/30 max-w-2xl mx-auto mt-12">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-xl bg-semantic-pain/10 flex items-center justify-center text-xl">⚠️</div>
+                                <h2 class="text-lg font-semibold text-semantic-pain">Something went wrong</h2>
+                            </div>
+                            <p class="text-sm text-txt-secondary mb-2">@GetFriendlyMessage(ex)</p>
+                            <p class="text-xs text-txt-muted mb-5">This error has been logged and our team will look into it.</p>
+                            <div class="flex items-center gap-3">
+                                <button @onclick="ResetError"
+                                        class="rounded-lg bg-semantic-system px-4 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5] transition-colors">
+                                    Try again
+                                </button>
+                                <a href="/dashboard"
+                                   class="rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-txt-secondary hover:text-txt-primary hover:bg-surface-hover/50 transition-colors">
+                                    Go to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </ErrorContent>
+                </ErrorBoundary>
+            </div>
+        </main>
+    }
+    else
+    {
+        <main class="min-h-screen">
+            <ErrorBoundary @ref="_errorBoundary">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent Context="ex">
+                    <div class="glass-card p-8 m-4 border border-semantic-pain/30 max-w-2xl mx-auto mt-12">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-semantic-pain/10 flex items-center justify-center text-xl">⚠️</div>
+                            <h2 class="text-lg font-semibold text-semantic-pain">Something went wrong</h2>
+                        </div>
+                        <p class="text-sm text-txt-secondary mb-2">@GetFriendlyMessage(ex)</p>
+                        <p class="text-xs text-txt-muted mb-5">This error has been logged and our team will look into it.</p>
+                        <button @onclick="ResetError"
+                                class="rounded-lg bg-semantic-system px-4 py-2 text-sm font-semibold text-white hover:bg-[#4F46E5] transition-colors">
+                            Try again
+                        </button>
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
+        </main>
+    }
+}
+else
+{
+    <div class="flex items-center justify-center min-h-screen bg-surface-bg">
+        <div class="flex flex-col items-center gap-4">
+            <img src="/images/logo-queryradar.png" alt="QueryRadar" class="w-12 h-12 rounded-xl object-contain" />
+            <div class="flex items-center gap-3 text-txt-secondary">
+                <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
+                <span class="text-sm">Loading QueryRadar...</span>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _initialized;
+    private ErrorBoundary? _errorBoundary;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            _initialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetError() => _errorBoundary?.Recover();
+
+    private static string GetFriendlyMessage(Exception ex) => ex switch
+    {
+        HttpRequestException httpEx when httpEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests
+            => "Our analysis agents are at capacity right now. Please wait a moment and try again.",
+        HttpRequestException
+            => "An external service is temporarily unavailable. Please try again in a few minutes.",
+        TaskCanceledException or OperationCanceledException
+            => "The operation took too long to complete. Please try again.",
+        InvalidOperationException ioEx => ioEx.Message,
+        _ => "An unexpected error occurred. Please try again or contact support if the problem persists."
+    };
+}
