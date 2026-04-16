@@ -6,180 +6,175 @@
         <div class="flex items-center justify-center min-h-[40vh]">
             <div class="flex items-center gap-3 text-txt-secondary">
                 <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
-                <span class="text-sm">Cargando dashboard...</span>
+                <span class="text-sm">Cargando...</span>
             </div>
         </div>
     }
-    else if (_error is not null)
-    {
-        <div class="glass-card p-6 m-8 border-semantic-pain/30">
-            <h2 class="text-lg font-semibold text-semantic-pain mb-2">Error al cargar el dashboard</h2>
-            <pre class="text-xs text-txt-muted whitespace-pre-wrap break-all">@_error</pre>
-        </div>
-    }
-    else if (_dashboard is not null)
+    else
     {
         <div class="mb-8">
-            <h1 class="text-2xl font-semibold text-txt-primary">Dashboard</h1>
-            <p class="text-sm text-txt-muted mt-1">Resumen de inteligencia en tiempo real</p>
+            <h1 class="text-2xl font-semibold text-txt-primary">Hola, @(Auth.User?.FullName?.Split(' ')[0] ?? "Usuario") 👋</h1>
+            <p class="text-sm text-txt-muted mt-1">Genera y gestiona requerimientos de software desde conversaciones con clientes</p>
         </div>
 
-        @* Metrics *@
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <MetricCard LucideIcon="file-text" Label="Documentos analizados" Value="_dashboard.TotalDocuments" />
-            <MetricCard LucideIcon="alert-triangle" Label="Señales de dolor detectadas" Value="_dashboard.TotalPainSignals" Color="pain" />
-            <MetricCard LucideIcon="layers" Label="Clusters de dolor" Value="_dashboard.TotalClusters" Color="cluster" />
-            <MetricCard LucideIcon="lightbulb" Label="Oportunidades encontradas" Value="_dashboard.TotalOpportunities" Color="opportunity" />
+        @* Usage Limit Banner (Free Plan) *@
+        @if (_limitMax != -1)
+        {
+            var remaining = _limitMax - _limitUsed;
+            var pct = (int)((double)_limitUsed / _limitMax * 100);
+            var barColor = remaining == 0 ? "bg-semantic-pain" : remaining == 1 ? "bg-semantic-cluster" : "bg-semantic-system";
+            <div class="glass-card p-5 mb-6 border @(remaining == 0 ? "border-semantic-pain/30" : "border-surface-border/50")">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <Icon Name="zap" Size="16" Class="text-semantic-cluster" StrokeWidth="1.5" />
+                        <span class="text-[13px] font-semibold text-txt-primary">Plan Gratuito</span>
+                    </div>
+                    <span class="text-[12px] text-txt-muted">@_limitUsed / @_limitMax generaciones usadas</span>
+                </div>
+                <div class="w-full h-1.5 rounded-full bg-surface-hover/60 overflow-hidden mb-3">
+                    <div class="h-full rounded-full transition-all @barColor" style="width: @pct%"></div>
+                </div>
+                @if (remaining == 0)
+                {
+                    <p class="text-[12px] text-semantic-pain">Has alcanzado el límite del plan gratuito. <a href="/account" class="underline hover:no-underline">Actualiza tu plan</a> para continuar generando.</p>
+                }
+                else
+                {
+                    <p class="text-[12px] text-txt-muted">Te quedan <strong class="text-txt-primary">@remaining generacion@(remaining == 1 ? "" : "es")</strong> en el plan gratuito.</p>
+                }
+            </div>
+        }
+
+        @* Metric cards *@
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8">
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-9 h-9 rounded-xl bg-semantic-system/10 flex items-center justify-center">
+                        <Icon Name="folder" Size="18" Class="text-semantic-system" StrokeWidth="1.5" />
+                    </div>
+                    <p class="text-[12px] text-txt-muted font-medium">Proyectos</p>
+                </div>
+                <p class="text-2xl font-bold text-txt-primary">@_projects.Count</p>
+            </div>
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-9 h-9 rounded-xl bg-semantic-opportunity/10 flex items-center justify-center">
+                        <Icon Name="file-text" Size="18" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                    </div>
+                    <p class="text-[12px] text-txt-muted font-medium">Generaciones</p>
+                </div>
+                <p class="text-2xl font-bold text-txt-primary">@_limitUsed</p>
+            </div>
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-9 h-9 rounded-xl bg-semantic-highlight/10 flex items-center justify-center">
+                        <Icon Name="refresh-cw" Size="18" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                    </div>
+                    <p class="text-[12px] text-txt-muted font-medium">Refinamientos</p>
+                </div>
+                <p class="text-2xl font-bold text-txt-primary">@_recentHistory.Sum(g => g.Refinements.Count)</p>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
-            @* Top Clusters *@
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            @* Recent Projects *@
             <div class="glass-card p-6">
                 <div class="flex items-center justify-between mb-5">
-                    <h2 class="text-[15px] font-semibold text-txt-primary">Top Clusters de Dolor</h2>
-                    <a href="/pains" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
+                    <h2 class="text-[15px] font-semibold text-txt-primary">Proyectos recientes</h2>
+                    <a href="/projects" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
                         Ver todos <Icon Name="arrow-right" Size="12" />
                     </a>
                 </div>
-                @if (_dashboard.TopClusters.Count == 0)
+                @if (_projects.Count == 0)
                 {
-                    <p class="text-txt-muted text-sm">
-                        Sin clusters aún. <a href="/search" class="text-semantic-system hover:text-semantic-highlight transition-colors">Realiza una búsqueda</a> para comenzar.
-                    </p>
+                    <div class="text-center py-8">
+                        <Icon Name="folder-plus" Size="28" Class="text-txt-muted/40 mx-auto mb-2" StrokeWidth="1" />
+                        <p class="text-sm text-txt-muted">Sin proyectos todavía.</p>
+                        <a href="/projects" class="inline-block mt-3 text-xs text-semantic-system hover:text-semantic-highlight transition-colors">Crear primer proyecto →</a>
+                    </div>
                 }
                 else
                 {
-                    <div class="space-y-3">
-                        @foreach (var cluster in _dashboard.TopClusters)
+                    <div class="space-y-2.5">
+                        @foreach (var p in _projects.Take(4))
                         {
-                            <div class="glass-card glow-cluster p-4">
-                                <div class="flex items-center justify-between mb-2.5">
-                                    <div>
-                                        <p class="font-medium text-[14px] text-txt-primary">@cluster.Title</p>
-                                        <p class="text-xs text-txt-muted mt-0.5">@cluster.Category · @cluster.DocumentCount docs</p>
+                            <a href="/projects/@p.Id" class="group flex items-center justify-between rounded-xl bg-surface-card/60 hover:bg-surface-hover/50 px-4 py-3 transition-all">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-8 h-8 rounded-lg bg-semantic-system/10 flex items-center justify-center shrink-0">
+                                        <Icon Name="folder" Size="14" Class="text-semantic-system" StrokeWidth="1.5" />
                                     </div>
-                                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold @(cluster.SeverityScore > 0.7 ? "bg-semantic-pain/15 text-semantic-pain" : cluster.SeverityScore > 0.4 ? "bg-semantic-cluster/15 text-semantic-cluster" : "bg-semantic-opportunity/15 text-semantic-opportunity")">
-                                        @cluster.SeverityScore.ToString("F2")
-                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="text-[13px] font-medium text-txt-primary truncate">@p.Name</p>
+                                        <p class="text-[11px] text-txt-muted">@p.GenerationCount generacion@(p.GenerationCount == 1 ? "" : "es")</p>
+                                    </div>
                                 </div>
-                                <div class="w-full bg-surface-bg/80 rounded-full h-1">
-                                    <div class="h-1 rounded-full bg-gradient-to-r from-semantic-cluster to-semantic-pain transition-all"
-                                         style="width: @((cluster.SeverityScore * 100).ToString("F0"))%"></div>
-                                </div>
-                            </div>
+                                <Icon Name="arrow-right" Size="14" Class="text-txt-muted/40 group-hover:text-semantic-system transition-colors shrink-0" StrokeWidth="1.5" />
+                            </a>
                         }
                     </div>
                 }
             </div>
 
-            @* Latest Opportunities *@
+            @* Recent Generations *@
             <div class="glass-card p-6">
                 <div class="flex items-center justify-between mb-5">
-                    <h2 class="text-[15px] font-semibold text-txt-primary">Últimas Oportunidades</h2>
-                    <a href="/opportunities" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
+                    <h2 class="text-[15px] font-semibold text-txt-primary">Generaciones recientes</h2>
+                    <a href="/history" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
                         Ver todas <Icon Name="arrow-right" Size="12" />
                     </a>
                 </div>
-                @if (_dashboard.LatestOpportunities.Count == 0)
+                @if (_recentHistory.Count == 0)
                 {
-                    <p class="text-txt-muted text-sm">Sin oportunidades aún.</p>
+                    <div class="text-center py-8">
+                        <Icon Name="file-text" Size="28" Class="text-txt-muted/40 mx-auto mb-2" StrokeWidth="1" />
+                        <p class="text-sm text-txt-muted">Aún no hay generaciones.</p>
+                        <a href="/projects" class="inline-block mt-3 text-xs text-semantic-system hover:text-semantic-highlight transition-colors">Comenzar →</a>
+                    </div>
                 }
                 else
                 {
-                    <div class="space-y-3">
-                        @foreach (var opp in _dashboard.LatestOpportunities)
+                    <div class="space-y-2.5">
+                        @foreach (var g in _recentHistory.Take(4))
                         {
-                            <div class="glass-card glow-opportunity p-4">
-                                <div class="flex justify-between items-start">
-                                    <p class="font-medium text-[14px] text-txt-primary">@opp.Title</p>
-                                    <span class="inline-flex items-center rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2 py-0.5 text-[11px] font-semibold shrink-0 ml-2">
-                                        @((opp.ConfidenceScore * 100).ToString("F0"))%
-                                    </span>
+                            <a href="/generation/@g.Id" class="group flex items-start gap-3 rounded-xl bg-surface-card/60 hover:bg-surface-hover/50 px-4 py-3 transition-all">
+                                <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0 mt-0.5">
+                                    <Icon Name="file-text" Size="14" Class="text-semantic-opportunity" StrokeWidth="1.5" />
                                 </div>
-                                <p class="text-xs text-txt-muted mt-1">@opp.MarketCategory</p>
-                            </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[12px] font-medium text-txt-secondary truncate">@g.ProjectName</p>
+                                    <p class="text-[11px] text-txt-muted truncate mt-0.5">@(g.OriginalInput.Length > 60 ? g.OriginalInput[..60] + "…" : g.OriginalInput)</p>
+                                    <p class="text-[10px] text-txt-muted/60 mt-1">@g.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
+                                </div>
+                            </a>
                         }
                     </div>
                 }
             </div>
-        </div>
-
-        @* Recent Search Runs *@
-        <div class="glass-card p-6">
-            <div class="flex items-center justify-between mb-5">
-                <h2 class="text-[15px] font-semibold text-txt-primary">Búsquedas Recientes</h2>
-                <a href="/search" class="text-xs text-txt-muted hover:text-semantic-system transition-colors flex items-center gap-1">
-                    Nueva búsqueda <Icon Name="arrow-right" Size="12" />
-                </a>
-            </div>
-            @if (_searchRuns.Count == 0)
-            {
-                <p class="text-txt-muted text-sm">
-                    Sin búsquedas aún. <a href="/search" class="text-semantic-system hover:text-semantic-highlight transition-colors">Inicia tu primera búsqueda</a>.
-                </p>
-            }
-            else
-            {
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                    @foreach (var run in _searchRuns.Take(6))
-                    {
-                        var sources = run.Sources.Split(',', StringSplitOptions.TrimEntries);
-                        <a href="/search/@run.Id" class="glass-card glow-highlight p-4 block">
-                            <div class="flex items-start justify-between mb-2">
-                                <p class="font-medium text-[14px] text-txt-primary">@run.Keyword</p>
-                                <StatusBadge Status="@run.Status" />
-                            </div>
-                            <div class="flex flex-wrap gap-1.5 mb-3">
-                                @foreach (var s in sources.Take(3))
-                                {
-                                    <SourceIcon Name="@s" Size="12" />
-                                }
-                                @if (sources.Length > 3)
-                                {
-                                    <span class="text-[11px] text-txt-muted">+@(sources.Length - 3)</span>
-                                }
-                            </div>
-                            <div class="flex items-center justify-between text-xs text-txt-muted">
-                                <span class="flex items-center gap-1">
-                                    <Icon Name="file-text" Size="12" /> @run.DocumentsCollected
-                                    <span class="mx-1">·</span>
-                                    <Icon Name="alert-triangle" Size="12" Class="text-semantic-pain/60" /> @run.PainsDetected
-                                </span>
-                                <span class="flex items-center gap-1">
-                                    <Icon Name="clock" Size="12" /> @run.StartedAt.ToLocalTime().ToShortDateString()
-                                </span>
-                            </div>
-                        </a>
-                    }
-                </div>
-            }
         </div>
     }
 </AuthGuard>
 
 @code {
-    [Inject] private IDashboardService DashboardService { get; set; } = default!;
-    [Inject] private ISearchRunService SearchRunService { get; set; } = default!;
+    [Inject] private IProjectService ProjectService { get; set; } = default!;
+    [Inject] private IRequirementsService RequirementsService { get; set; } = default!;
     [Inject] private AuthService Auth { get; set; } = default!;
 
-    private DashboardDto? _dashboard;
-    private List<SearchRunDto> _searchRuns = [];
+    private List<ProjectDto> _projects = [];
+    private List<RequirementGenerationDto> _recentHistory = [];
+    private int _limitUsed;
+    private int _limitMax = -1;
     private bool _loading = true;
-    private string? _error;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && Auth.User is not null)
         {
             try
             {
-                _dashboard = await DashboardService.GetDashboardAsync();
-                if (Auth.User is not null)
-                    _searchRuns = (await SearchRunService.GetAllSearchRunsAsync(Auth.User.Id)).ToList();
-            }
-            catch (Exception ex)
-            {
-                _error = ex.ToString();
+                var id = Auth.User.Id;
+                _projects = await ProjectService.GetUserProjectsAsync(id);
+                _recentHistory = await RequirementsService.GetUserHistoryAsync(id);
+                (_limitUsed, _limitMax) = await RequirementsService.GetGenerationLimitsAsync(id);
             }
             finally
             {

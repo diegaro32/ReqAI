@@ -1,0 +1,98 @@
+@page "/history"
+
+<AuthGuard>
+    <div class="mb-6">
+        <h1 class="text-2xl font-semibold text-txt-primary">Historial</h1>
+        <p class="text-sm text-txt-muted mt-1">Todas tus generaciones de requerimientos</p>
+    </div>
+
+    @if (_loading)
+    {
+        <RadarLoader Message="Cargando historial..." />
+    }
+    else if (_generations.Count == 0)
+    {
+        <div class="glass-card p-12 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-semantic-system/10 flex items-center justify-center mx-auto mb-4">
+                <Icon Name="clock" Size="24" Class="text-semantic-system" StrokeWidth="1.5" />
+            </div>
+            <h2 class="text-[15px] font-semibold text-txt-primary mb-2">Sin generaciones todavía</h2>
+            <p class="text-sm text-txt-muted max-w-xs mx-auto mb-5">Tu historial de generaciones aparecerá aquí.</p>
+            <a href="/projects" class="btn-gradient px-5 py-2.5 text-sm rounded-xl inline-flex items-center gap-2">
+                <Icon Name="folder" Size="14" StrokeWidth="2" /> Ir a proyectos
+            </a>
+        </div>
+    }
+    else
+    {
+        @* Group by date *@
+        @foreach (var group in _grouped)
+        {
+            <div class="mb-6">
+                <p class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider mb-3 px-1">@group.Key</p>
+                <div class="space-y-2.5">
+                    @foreach (var gen in group.Value)
+                    {
+                        <a href="/generation/@gen.Id"
+                           class="glass-card p-5 block group hover:border-semantic-system/30 transition-all">
+                            <div class="flex items-start gap-4">
+                                <div class="w-9 h-9 rounded-xl bg-semantic-opportunity/10 flex items-center justify-center shrink-0 mt-0.5">
+                                    <Icon Name="file-text" Size="16" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                        <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-semantic-system/10 text-semantic-system font-medium">
+                                            <Icon Name="folder" Size="9" StrokeWidth="2" /> @gen.ProjectName
+                                        </span>
+                                        <span class="text-[11px] text-txt-muted">@gen.CreatedAt.ToLocalTime().ToString("HH:mm")</span>
+                                        @if (gen.Refinements.Count > 0)
+                                        {
+                                            <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-semantic-highlight/10 text-semantic-highlight">
+                                                <Icon Name="refresh-cw" Size="9" StrokeWidth="2" /> @gen.Refinements.Count refin.
+                                            </span>
+                                        }
+                                    </div>
+                                    <p class="text-[13px] text-txt-secondary line-clamp-2">
+                                        @(gen.OriginalInput.Length > 150 ? gen.OriginalInput[..150] + "…" : gen.OriginalInput)
+                                    </p>
+                                </div>
+                                <Icon Name="arrow-right" Size="15" Class="text-txt-muted/30 group-hover:text-semantic-system transition-colors shrink-0 mt-1" StrokeWidth="1.5" />
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    }
+</AuthGuard>
+
+@code {
+    [Inject] private IRequirementsService RequirementsService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+
+    private List<RequirementGenerationDto> _generations = [];
+    private Dictionary<string, List<RequirementGenerationDto>> _grouped = [];
+    private bool _loading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Auth.User is not null)
+        {
+            _generations = await RequirementsService.GetUserHistoryAsync(Auth.User.Id);
+            _grouped = _generations
+                .GroupBy(g => GroupKey(g.CreatedAt))
+                .ToDictionary(g => g.Key, g => g.ToList());
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string GroupKey(DateTime dt)
+    {
+        var local = dt.ToLocalTime();
+        var today = DateTime.Now.Date;
+        return local.Date == today ? "Hoy"
+            : local.Date == today.AddDays(-1) ? "Ayer"
+            : local.ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-ES"));
+    }
+}

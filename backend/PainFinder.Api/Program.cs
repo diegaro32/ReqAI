@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using PainFinder.Api.BackgroundServices;
 using PainFinder.Api.Endpoints;
 using PainFinder.Api.Middleware;
 using PainFinder.Application;
@@ -22,9 +21,12 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services));
+    builder.Host.UseSerilog((context, services, configuration) =>
+    {
+        configuration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services);
+    });
 
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -33,32 +35,35 @@ try
     if (string.IsNullOrEmpty(geminiApiKey))
         throw new InvalidOperationException("Gemini API key not found. Set 'Gemini:ApiKey' via user secrets: dotnet user-secrets set \"Gemini:ApiKey\" \"your-key\"");
 
-    var stackOverflowApiKey = builder.Configuration["StackOverflow:ApiKey"] ?? string.Empty;
-
     var jwtKey = builder.Configuration["Jwt:Key"];
     if (string.IsNullOrEmpty(jwtKey))
         throw new InvalidOperationException("JWT key not found. Set 'Jwt:Key' via user secrets: dotnet user-secrets set \"Jwt:Key\" \"your-key\"");
 
     builder.Services.AddApplication();
-    builder.Services.AddInfrastructure(connectionString, geminiApiKey, stackOverflowApiKey);
+    builder.Services.AddInfrastructure(connectionString, geminiApiKey);
 
     // Lemon Squeezy
     builder.Services.Configure<LemonSqueezySettings>(builder.Configuration.GetSection("LemonSqueezy"));
 
-    // Blazor Server
+    // Blazor Server — hub con timeout extendido para llamadas largas a la IA
     builder.Services.AddRazorComponents()
-        .AddInteractiveServerComponents();
+        .AddInteractiveServerComponents()
+        .AddHubOptions(options =>
+        {
+            options.ClientTimeoutInterval    = TimeSpan.FromMinutes(3);
+            options.KeepAliveInterval        = TimeSpan.FromSeconds(15);
+            options.HandshakeTimeout         = TimeSpan.FromSeconds(30);
+            // El límite por defecto de 32 KB es demasiado pequeño para conversaciones
+            // largas enviadas vía @oninput. Se aumenta a 10 MB.
+            options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB
+        })
+        .AddCircuitOptions(options =>
+        {
+            if (builder.Environment.IsDevelopment())
+                options.DetailedErrors = true;
+        });
     builder.Services.AddScoped<AuthService>();
     builder.Services.AddScoped<IErrorBoundaryLogger, GlobalErrorHandler>();
-
-    // Detailed circuit errors in development
-    if (builder.Environment.IsDevelopment())
-    {
-        builder.Services.AddServerSideBlazor().AddCircuitOptions(options =>
-        {
-            options.DetailedErrors = true;
-        });
-    }
 
     // JWT Authentication (for external API consumers)
     builder.Services.AddAuthentication(options =>
@@ -80,10 +85,6 @@ try
         };
     });
     builder.Services.AddAuthorization();
-
-    // Background services
-    builder.Services.AddHostedService<ScraperBackgroundService>();
-    builder.Services.AddHostedService<RadarScanBackgroundService>();
 
     // Health checks
     builder.Services.AddHealthChecks()
@@ -140,7 +141,6 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        app.MapDiagnosticsEndpoints();
     }
 
     app.UseSerilogRequestLogging();
@@ -160,12 +160,10 @@ try
 
     // API endpoints
     app.MapAuthEndpoints().RequireRateLimiting("auth");
-    app.MapSearchEndpoints().RequireAuthorization().RequireRateLimiting("search");
-    app.MapRadarEndpoints().RequireAuthorization().RequireRateLimiting("api");
-    app.MapOpportunityEndpoints().RequireAuthorization().RequireRateLimiting("api");
-    app.MapDashboardEndpoints().RequireAuthorization().RequireRateLimiting("api");
     app.MapSubscriptionEndpoints().RequireAuthorization().RequireRateLimiting("api");
     app.MapPaymentWebhookEndpoints();
+    app.MapProjectEndpoints().RequireAuthorization().RequireRateLimiting("api");
+    app.MapRequirementsEndpoints().RequireAuthorization().RequireRateLimiting("api");
 
     // Health check
     app.MapHealthChecks("/health");

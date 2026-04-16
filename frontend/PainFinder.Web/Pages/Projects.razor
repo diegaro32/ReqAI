@@ -1,0 +1,232 @@
+@page "/projects"
+
+<AuthGuard>
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-semibold text-txt-primary">Proyectos</h1>
+            <p class="text-sm text-txt-muted mt-1">Organiza tus generaciones de requerimientos por proyecto</p>
+        </div>
+        <button @onclick="() => _showForm = true"
+                class="btn-gradient flex items-center gap-2 px-4 py-2.5 text-[13px] rounded-xl">
+            <Icon Name="plus" Size="15" StrokeWidth="2" />
+            Nuevo proyecto
+        </button>
+    </div>
+
+    @if (_loading)
+    {
+        <RadarLoader Message="Cargando proyectos..." />
+    }
+    else if (_projects.Count == 0)
+    {
+        <div class="glass-card p-12 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-semantic-system/10 flex items-center justify-center mx-auto mb-4">
+                <Icon Name="folder-plus" Size="28" Class="text-semantic-system" StrokeWidth="1.5" />
+            </div>
+            <h2 class="text-[16px] font-semibold text-txt-primary mb-2">Crea tu primer proyecto</h2>
+            <p class="text-sm text-txt-muted max-w-sm mx-auto mb-6">Cada proyecto agrupa generaciones de requerimientos. Empieza creando uno para organizar tu trabajo.</p>
+            <button @onclick="() => _showForm = true" class="btn-gradient px-5 py-2.5 text-sm rounded-xl">
+                Crear proyecto
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var project in _projects)
+            {
+                <div class="glass-card p-5 group relative flex flex-col">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-semantic-system/10 flex items-center justify-center shrink-0">
+                            <Icon Name="folder" Size="18" Class="text-semantic-system" StrokeWidth="1.5" />
+                        </div>
+                        <button @onclick="() => _pendingDelete = project"
+                                class="opacity-0 group-hover:opacity-100 text-txt-muted hover:text-semantic-pain p-1.5 rounded-lg hover:bg-semantic-pain/8 transition-all">
+                            <Icon Name="trash-2" Size="14" StrokeWidth="1.5" />
+                        </button>
+                    </div>
+                    <a href="/projects/@project.Id" class="flex-1">
+                        <h3 class="text-[14px] font-semibold text-txt-primary mb-1 group-hover:text-semantic-system transition-colors">@project.Name</h3>
+                        @if (!string.IsNullOrEmpty(project.Description))
+                        {
+                            <p class="text-[12px] text-txt-muted line-clamp-2 mb-3">@project.Description</p>
+                        }
+                        <div class="flex items-center gap-3 mt-auto pt-3 border-t border-surface-border/40 text-[11px] text-txt-muted">
+                            <span class="flex items-center gap-1">
+                                <Icon Name="file-text" Size="11" StrokeWidth="1.5" />
+                                @project.GenerationCount generacion@(project.GenerationCount == 1 ? "" : "es")
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <Icon Name="clock" Size="11" StrokeWidth="1.5" />
+                                @project.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</AuthGuard>
+
+@* Create project modal *@
+@if (_showForm)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @onclick="CloseForm">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative z-10 w-full max-w-md rounded-2xl bg-surface-card border border-surface-border/60 shadow-2xl p-6 space-y-5"
+             @onclick:stopPropagation>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-semantic-system/10 flex items-center justify-center">
+                    <Icon Name="folder-plus" Size="18" Class="text-semantic-system" StrokeWidth="1.5" />
+                </div>
+                <h2 class="text-[15px] font-bold text-txt-primary">Nuevo proyecto</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[12px] font-medium text-txt-secondary mb-1.5">Nombre *</label>
+                    <input @bind="_newName" placeholder="Ej: App de gestión de inventario"
+                           class="block w-full rounded-xl bg-surface-bg/80 border border-surface-border px-3.5 py-2.5 text-[13px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-system focus:ring-2 focus:ring-semantic-system/20 focus:outline-none transition-all" />
+                </div>
+                <div>
+                    <label class="block text-[12px] font-medium text-txt-secondary mb-1.5">Descripción (opcional)</label>
+                    <textarea @bind="_newDescription" rows="2" placeholder="Breve descripción del proyecto..."
+                              class="block w-full rounded-xl bg-surface-bg/80 border border-surface-border px-3.5 py-2.5 text-[13px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-system focus:ring-2 focus:ring-semantic-system/20 focus:outline-none transition-all resize-none"></textarea>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_formError))
+            {
+                <p class="text-[12px] text-semantic-pain">@_formError</p>
+            }
+
+            <div class="flex gap-3 pt-1">
+                <button @onclick="CloseForm"
+                        class="flex-1 rounded-xl border border-surface-border/60 bg-surface-hover/40 px-4 py-2.5 text-[13px] font-semibold text-txt-secondary hover:bg-surface-hover/70 transition-colors">
+                    Cancelar
+                </button>
+                <button @onclick="CreateProject" disabled="@_creating"
+                        class="flex-1 btn-gradient rounded-xl px-4 py-2.5 text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-60">
+                    @if (_creating)
+                    {
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Creando...</span>
+                    }
+                    else
+                    {
+                        <span>Crear proyecto</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* Delete confirmation modal *@
+@if (_pendingDelete is not null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" @onclick="() => _pendingDelete = null">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative z-10 w-full max-w-sm rounded-2xl bg-surface-card border border-surface-border/60 shadow-2xl p-6 space-y-5"
+             @onclick:stopPropagation>
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                    <Icon Name="trash-2" Size="18" Class="text-semantic-pain" StrokeWidth="1.5" />
+                </div>
+                <div>
+                    <h3 class="text-[14px] font-bold text-txt-primary">¿Eliminar proyecto?</h3>
+                    <p class="text-[12px] text-txt-muted mt-1">Se eliminarán <strong>@_pendingDelete.Name</strong> y todas sus generaciones. Esta acción no se puede deshacer.</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button @onclick="() => _pendingDelete = null"
+                        class="flex-1 rounded-xl border border-surface-border/60 bg-surface-hover/40 px-4 py-2.5 text-[13px] font-semibold text-txt-secondary hover:bg-surface-hover/70 transition-colors">
+                    Cancelar
+                </button>
+                <button @onclick="ConfirmDelete" disabled="@_deleting"
+                        class="flex-1 rounded-xl bg-semantic-pain px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors flex items-center justify-center gap-2">
+                    @if (_deleting) { <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> }
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private IProjectService ProjectService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    private List<ProjectDto> _projects = [];
+    private bool _loading = true;
+    private bool _showForm;
+    private bool _creating;
+    private bool _deleting;
+    private string _newName = string.Empty;
+    private string _newDescription = string.Empty;
+    private string? _formError;
+    private ProjectDto? _pendingDelete;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Auth.User is not null)
+        {
+            _projects = await ProjectService.GetUserProjectsAsync(Auth.User.Id);
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseForm()
+    {
+        _showForm = false;
+        _newName = string.Empty;
+        _newDescription = string.Empty;
+        _formError = null;
+    }
+
+    private async Task CreateProject()
+    {
+        if (string.IsNullOrWhiteSpace(_newName))
+        {
+            _formError = "El nombre del proyecto es obligatorio.";
+            return;
+        }
+
+        _creating = true;
+        _formError = null;
+        try
+        {
+            var project = await ProjectService.CreateProjectAsync(
+                Auth.User!.Id,
+                new CreateProjectRequest(_newName.Trim(), _newDescription.Trim()));
+            _showForm = false;
+            Nav.NavigateTo($"/projects/{project.Id}");
+        }
+        catch (Exception ex)
+        {
+            _formError = ex.Message;
+        }
+        finally
+        {
+            _creating = false;
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (Auth.User is null || _pendingDelete is null) return;
+        _deleting = true;
+        try
+        {
+            await ProjectService.DeleteProjectAsync(Auth.User.Id, _pendingDelete.Id);
+            _projects = await ProjectService.GetUserProjectsAsync(Auth.User.Id);
+            _pendingDelete = null;
+        }
+        finally
+        {
+            _deleting = false;
+        }
+    }
+}

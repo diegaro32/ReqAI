@@ -1,0 +1,308 @@
+@page "/generation/{GenerationId:guid}"
+@using System.Text.Json
+
+<AuthGuard>
+    @if (_loading)
+    {
+        <RadarLoader Message="Cargando resultado..." />
+    }
+    else if (_generation is null)
+    {
+        <div class="glass-card p-8 text-center">
+            <p class="text-txt-muted">Generación no encontrada.</p>
+            <a href="/history" class="inline-block mt-3 text-sm text-semantic-system transition-colors">← Ver historial</a>
+        </div>
+    }
+    else
+    {
+        @* Breadcrumb *@
+        <div class="flex items-center gap-2 text-[12px] text-txt-muted mb-6">
+            <a href="/projects" class="hover:text-semantic-system transition-colors">Proyectos</a>
+            <Icon Name="chevron-right" Size="12" StrokeWidth="1.5" />
+            <a href="/projects/@_generation.ProjectId" class="hover:text-semantic-system transition-colors">@_generation.ProjectName</a>
+            <Icon Name="chevron-right" Size="12" StrokeWidth="1.5" />
+            <span class="text-txt-secondary">@_generation.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+        </div>
+
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-txt-primary">Requerimientos generados</h1>
+                <p class="text-sm text-txt-muted mt-1">@_generation.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <button @onclick="CopyAll" title="Copiar todo"
+                        class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border/60 bg-surface-hover/30 text-[12px] text-txt-secondary hover:bg-surface-hover/60 transition-colors">
+                    <Icon Name="@(_copied ? "check" : "copy")" Size="13" StrokeWidth="1.5" Class="@(_copied ? "text-semantic-opportunity" : "")" />
+                    @(_copied ? "Copiado" : "Copiar")
+                </button>
+                <button @onclick="DownloadTxt" title="Exportar como .txt"
+                        class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-surface-border/60 bg-surface-hover/30 text-[12px] text-txt-secondary hover:bg-surface-hover/60 transition-colors">
+                    <Icon Name="download" Size="13" StrokeWidth="1.5" />
+                    Exportar
+                </button>
+            </div>
+        </div>
+
+        @* Results grid *@
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            @* Functional *@
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0">
+                        <Icon Name="check-circle" Size="15" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Requerimientos funcionales</h3>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@FuncItems.Count</span>
+                </div>
+                @if (FuncItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
+                else { <ul class="space-y-2">@foreach (var item in FuncItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-opportunity shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+            </div>
+
+            @* Non-Functional *@
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-system/10 flex items-center justify-center shrink-0">
+                        <Icon Name="shield" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Requerimientos no funcionales</h3>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@NfuncItems.Count</span>
+                </div>
+                @if (NfuncItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
+                else { <ul class="space-y-2">@foreach (var item in NfuncItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-system shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+            </div>
+
+            @* Ambiguities *@
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-cluster/10 flex items-center justify-center shrink-0">
+                        <Icon Name="help-circle" Size="15" Class="text-semantic-cluster" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Ambigüedades / Info faltante</h3>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@AmbItems.Count</span>
+                </div>
+                @if (AmbItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
+                else { <ul class="space-y-2">@foreach (var item in AmbItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-cluster shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+            </div>
+
+            @* Suggested Features *@
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-highlight/10 flex items-center justify-center shrink-0">
+                        <Icon Name="lightbulb" Size="15" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Funcionalidades sugeridas</h3>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@SuggItems.Count</span>
+                </div>
+                @if (SuggItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
+                else { <ul class="space-y-2">@foreach (var item in SuggItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-highlight shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+            </div>
+        </div>
+
+        @* Original input toggle *@
+        <div class="glass-card mb-6">
+            <button @onclick="() => _showInput = !_showInput"
+                    class="w-full flex items-center justify-between px-5 py-4 text-[13px] font-medium text-txt-secondary hover:text-txt-primary transition-colors">
+                <span class="flex items-center gap-2">
+                    <Icon Name="message-square" Size="15" StrokeWidth="1.5" />
+                    Conversación original
+                </span>
+                <Icon Name="@(_showInput ? "chevron-up" : "chevron-down")" Size="15" StrokeWidth="1.5" />
+            </button>
+            @if (_showInput)
+            {
+                <div class="px-5 pb-5">
+                    <div class="rounded-xl bg-surface-bg/60 border border-surface-border/40 p-4">
+                        <pre class="text-[12px] text-txt-secondary whitespace-pre-wrap font-mono leading-relaxed">@_generation.OriginalInput</pre>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* Refinement section *@
+        <div class="glass-card p-6 mb-6">
+            <h2 class="text-[15px] font-semibold text-txt-primary mb-3 flex items-center gap-2">
+                <Icon Name="wand-2" Size="16" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                Refinar resultado
+            </h2>
+            <p class="text-[12px] text-txt-muted mb-4">Proporciona una instrucción para ajustar los requerimientos. Ej: "hazlo más técnico", "agrega seguridad", "simplifica el lenguaje".</p>
+            <div class="flex gap-3">
+                <input @bind="_refineInstruction" placeholder="Ej: Hazlo más técnico y específico..."
+                       class="flex-1 rounded-xl bg-surface-bg/80 border border-surface-border px-4 py-2.5 text-[13px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-system focus:ring-2 focus:ring-semantic-system/20 focus:outline-none transition-all" />
+                <button @onclick="HandleRefine" disabled="@_refining"
+                        class="btn-gradient px-4 py-2.5 text-[13px] rounded-xl flex items-center gap-2 disabled:opacity-60 shrink-0">
+                    @if (_refining)
+                    {
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Refinando...</span>
+                    }
+                    else
+                    {
+                        <Icon Name="wand-2" Size="14" StrokeWidth="2" />
+                        <span>Refinar</span>
+                    }
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(_refineError))
+            {
+                <p class="text-[12px] text-semantic-pain mt-2">@_refineError</p>
+            }
+        </div>
+
+        @* Refinement history *@
+        @if (_generation.Refinements.Count > 0)
+        {
+            <div class="glass-card p-6">
+                <h2 class="text-[15px] font-semibold text-txt-primary mb-4 flex items-center gap-2">
+                    <Icon Name="history" Size="16" Class="text-txt-muted" StrokeWidth="1.5" />
+                    Historial de refinamientos
+                </h2>
+                <div class="space-y-3">
+                    @foreach (var refinement in _generation.Refinements)
+                    {
+                        var isActive = _activeRefinementId == refinement.Id;
+                        <div class="rounded-xl border @(isActive ? "border-semantic-system/40 bg-semantic-system/5" : "border-surface-border/40 bg-surface-card/40") p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-[12px] text-txt-muted mb-1">@refinement.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
+                                    <p class="text-[13px] text-txt-secondary italic">"@refinement.Instruction"</p>
+                                </div>
+                                <button @onclick="() => ToggleRefinement(refinement)"
+                                        class="shrink-0 text-[11px] px-3 py-1.5 rounded-lg border @(isActive ? "border-semantic-system/40 text-semantic-system bg-semantic-system/10" : "border-surface-border/60 text-txt-muted hover:text-semantic-system") transition-colors">
+                                    @(isActive ? "Activo" : "Ver")
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</AuthGuard>
+
+@code {
+    [Parameter] public Guid GenerationId { get; set; }
+
+    [Inject] private IRequirementsService RequirementsService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private RequirementGenerationDto? _generation;
+    private bool _loading = true;
+    private bool _showInput;
+    private bool _copied;
+    private bool _refining;
+    private string _refineInstruction = string.Empty;
+    private string? _refineError;
+    private Guid? _activeRefinementId;
+    private ParsedOutput? _activeOutput;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Auth.User is not null)
+        {
+            _generation = await RequirementsService.GetGenerationByIdAsync(Auth.User.Id, GenerationId);
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private List<string> FuncItems  => _activeOutput?.FunctionalRequirements   ?? ParseList(_generation!.FunctionalRequirements);
+    private List<string> NfuncItems => _activeOutput?.NonFunctionalRequirements ?? ParseList(_generation!.NonFunctionalRequirements);
+    private List<string> AmbItems   => _activeOutput?.Ambiguities               ?? ParseList(_generation!.Ambiguities);
+    private List<string> SuggItems  => _activeOutput?.SuggestedFeatures         ?? ParseList(_generation!.SuggestedFeatures);
+
+    private static List<string> ParseList(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<string>>(json) ?? []; }
+        catch { return [json]; }
+    }
+
+    private void ToggleRefinement(RefinementResultDto refinement)
+    {
+        if (_activeRefinementId == refinement.Id)
+        {
+            _activeRefinementId = null;
+            _activeOutput = null;
+        }
+        else
+        {
+            _activeRefinementId = refinement.Id;
+            try { _activeOutput = JsonSerializer.Deserialize<ParsedOutput>(refinement.RefinedOutput, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }); }
+            catch { _activeOutput = null; }
+        }
+    }
+
+    private async Task HandleRefine()
+    {
+        if (string.IsNullOrWhiteSpace(_refineInstruction)) { _refineError = "Escribe una instrucción."; return; }
+        _refining = true;
+        _refineError = null;
+        try
+        {
+            var result = await RequirementsService.RefineAsync(
+                Auth.User!.Id,
+                new RefineRequirementsRequest(GenerationId, _refineInstruction.Trim()));
+            _generation = await RequirementsService.GetGenerationByIdAsync(Auth.User.Id, GenerationId);
+            ToggleRefinement(result);
+            _refineInstruction = string.Empty;
+        }
+        catch (Exception ex) { _refineError = ex.Message; }
+        finally { _refining = false; }
+    }
+
+    private async Task CopyAll()
+    {
+        if (_generation is null) return;
+        var text = BuildExportText();
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        _copied = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        _copied = false;
+        StateHasChanged();
+    }
+
+    private async Task DownloadTxt()
+    {
+        if (_generation is null) return;
+        var text = BuildExportText();
+        var bytes = System.Text.Encoding.UTF8.GetBytes(text);
+        var base64 = Convert.ToBase64String(bytes);
+        var fileName = $"requerimientos-{_generation.CreatedAt:yyyyMMdd-HHmm}.txt";
+        await JS.InvokeVoidAsync("eval", $"const a=document.createElement('a');a.href='data:text/plain;base64,{base64}';a.download='{fileName}';a.click()");
+    }
+
+    private string BuildExportText()
+    {
+        var g = _generation!;
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"REQUERIMIENTOS — {g.ProjectName}");
+        sb.AppendLine($"Generado: {g.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}");
+        if (_activeOutput is not null) sb.AppendLine("[Versión refinada]");
+        sb.AppendLine(new string('=', 60));
+        sb.AppendLine();
+
+        AppendSection(sb, "REQUERIMIENTOS FUNCIONALES",    _activeOutput?.FunctionalRequirements   ?? ParseList(g.FunctionalRequirements));
+        AppendSection(sb, "REQUERIMIENTOS NO FUNCIONALES", _activeOutput?.NonFunctionalRequirements ?? ParseList(g.NonFunctionalRequirements));
+        AppendSection(sb, "AMBIGÜEDADES / INFO FALTANTE",  _activeOutput?.Ambiguities               ?? ParseList(g.Ambiguities));
+        AppendSection(sb, "FUNCIONALIDADES SUGERIDAS",     _activeOutput?.SuggestedFeatures         ?? ParseList(g.SuggestedFeatures));
+        return sb.ToString();
+    }
+
+    private static void AppendSection(System.Text.StringBuilder sb, string title, List<string> items)
+    {
+        sb.AppendLine(title);
+        sb.AppendLine(new string('-', title.Length));
+        foreach (var item in items) sb.AppendLine($"• {item}");
+        sb.AppendLine();
+    }
+
+    private sealed class ParsedOutput
+    {
+        public List<string>? FunctionalRequirements { get; set; }
+        public List<string>? NonFunctionalRequirements { get; set; }
+        public List<string>? Ambiguities { get; set; }
+        public List<string>? SuggestedFeatures { get; set; }
+    }
+}

@@ -48,44 +48,6 @@ public class SubscriptionService(PainFinderDbContext dbContext) : ISubscriptionS
         return ToDto(plan);
     }
 
-    public async Task IncrementSearchUsageAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var plan = await GetOrCreatePlanAsync(userId, cancellationToken);
-        ResetPeriodIfNeeded(plan);
-        plan.SearchesUsedThisMonth++;
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<bool> CanUserSearchAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var plan = await GetOrCreatePlanAsync(userId, cancellationToken);
-        ResetPeriodIfNeeded(plan);
-        return plan.CanSearch;
-    }
-
-    public async Task IncrementMvpUsageAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var plan = await GetOrCreatePlanAsync(userId, cancellationToken);
-        ResetPeriodIfNeeded(plan);
-        plan.MvpsUsedThisMonth++;
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<bool> CanUserGenerateMvpAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var plan = await GetOrCreatePlanAsync(userId, cancellationToken);
-        ResetPeriodIfNeeded(plan);
-        return plan.CanGenerateMvp;
-    }
-
-    public async Task<bool> CanUserCreateMonitorAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var plan = await GetOrCreatePlanAsync(userId, cancellationToken);
-        var currentMonitors = await dbContext.RadarMonitors
-            .CountAsync(m => m.UserId == userId && m.Status != RadarMonitorStatus.Archived, cancellationToken);
-        return plan.CanCreateMonitor(currentMonitors);
-    }
-
     public async Task EnsurePlanExistsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         await GetOrCreatePlanAsync(userId, cancellationToken);

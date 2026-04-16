@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QueryRadar — AI Intelligence Platform</title>
+    <title>ReqAI — Generador de Requerimientos</title>
     <base href="/" />
     <link rel="icon" type="image/png" sizes="any" href="/images/favicon.png" />
     <link rel="shortcut icon" href="/images/favicon.png" />
@@ -60,6 +60,11 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        };
+
+        window.getElementValue = function (id) {
+            var el = document.getElementById(id);
+            return el ? el.value : '';
         };
     </script>
 </body>

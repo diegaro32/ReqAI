@@ -1,0 +1,179 @@
+@page "/generate/{ProjectId:guid}"
+
+<AuthGuard>
+    @if (_loading)
+    {
+        <RadarLoader Message="Cargando..." />
+    }
+    else if (_limitReached)
+    {
+        <div class="max-w-lg mx-auto glass-card p-8 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-semantic-pain/10 flex items-center justify-center mx-auto mb-4">
+                <Icon Name="lock" Size="24" Class="text-semantic-pain" StrokeWidth="1.5" />
+            </div>
+            <h2 class="text-[16px] font-bold text-txt-primary mb-2">Límite alcanzado</h2>
+            <p class="text-sm text-txt-muted mb-5">Has usado las @_limitMax generaciones del plan gratuito. Actualiza tu plan para continuar.</p>
+            <div class="flex gap-3 justify-center">
+                <a href="/account" class="btn-gradient px-5 py-2.5 text-sm rounded-xl">Actualizar plan</a>
+                <a href="/projects/@ProjectId" class="rounded-xl border border-surface-border/60 px-5 py-2.5 text-sm text-txt-secondary hover:bg-surface-hover/50 transition-colors">Volver</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="max-w-3xl mx-auto">
+            @* Breadcrumb *@
+            <div class="flex items-center gap-2 text-[12px] text-txt-muted mb-6">
+                <a href="/projects" class="hover:text-semantic-system transition-colors">Proyectos</a>
+                <Icon Name="chevron-right" Size="12" StrokeWidth="1.5" />
+                <a href="/projects/@ProjectId" class="hover:text-semantic-system transition-colors">@(_project?.Name ?? "Proyecto")</a>
+                <Icon Name="chevron-right" Size="12" StrokeWidth="1.5" />
+                <span class="text-txt-secondary">Generar</span>
+            </div>
+
+            <div class="mb-6">
+                <h1 class="text-2xl font-semibold text-txt-primary">Generar requerimientos</h1>
+                <p class="text-sm text-txt-muted mt-1">Pega la conversación con tu cliente y la IA extraerá los requerimientos estructurados</p>
+            </div>
+
+            @* Usage indicator *@
+            @if (_limitMax != -1)
+            {
+                var remaining = _limitMax - _limitUsed;
+                <div class="glass-card px-4 py-3 mb-5 flex items-center gap-3">
+                    <Icon Name="zap" Size="14" Class="text-semantic-cluster shrink-0" StrokeWidth="1.5" />
+                    <p class="text-[12px] text-txt-muted">
+                        <span class="text-txt-primary font-medium">@remaining generacion@(remaining == 1 ? "" : "es")</span> restante@(remaining == 1 ? "" : "s") en el plan gratuito
+                    </p>
+                </div>
+            }
+
+            <div class="glass-card p-6 space-y-5">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-[13px] font-medium text-txt-secondary">
+                            Conversación con el cliente
+                        </label>
+                        @if (_conversationInput.Length > 0)
+                        {
+                            <span class="text-[11px] text-semantic-opportunity">@_conversationInput.Length caracteres</span>
+                        }
+                    </div>
+                    <p class="text-[11px] text-txt-muted mb-2">Incluye el contexto completo: qué quiere el cliente, sus necesidades, restricciones y cualquier aclaración.</p>
+                    <textarea id="conversation-input"
+                              @oninput="@(e => _conversationInput = e.Value?.ToString() ?? string.Empty)"
+                              rows="12"
+                              placeholder="Ejemplo:&#10;Cliente: Necesito una app para gestionar mi inventario...&#10;Dev: ¿Cuántos usuarios la usarán?&#10;Cliente: Máximo 5 personas en mi equipo..."
+                              class="block w-full rounded-xl bg-surface-bg/80 border border-surface-border px-4 py-3 text-[13px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-system focus:ring-2 focus:ring-semantic-system/20 focus:outline-none transition-all resize-none font-mono leading-relaxed"></textarea>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="rounded-xl bg-semantic-pain/10 border border-semantic-pain/20 px-4 py-3 text-[13px] text-semantic-pain">
+                        @_error
+                    </div>
+                }
+
+                <div class="flex gap-3">
+                    <a href="/projects/@ProjectId"
+                       class="rounded-xl border border-surface-border/60 bg-surface-hover/40 px-5 py-2.5 text-[13px] font-semibold text-txt-secondary hover:bg-surface-hover/70 transition-colors">
+                        Cancelar
+                    </a>
+                    <button @onclick="HandleGenerate" disabled="@_generating"
+                            class="flex-1 btn-gradient px-5 py-2.5 text-[13px] rounded-xl flex items-center justify-center gap-2 disabled:opacity-60">
+                        @if (_generating)
+                        {
+                            <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>@_statusMessage</span>
+                        }
+                        else
+                        {
+                            <Icon Name="sparkles" Size="15" StrokeWidth="2" />
+                            <span>Generar requerimientos</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</AuthGuard>
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+
+    [Inject] private IProjectService ProjectService { get; set; } = default!;
+    [Inject] private IRequirementsService RequirementsService { get; set; } = default!;
+    [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private ProjectDto? _project;
+    private string _conversationInput = string.Empty;
+    private bool _loading = true;
+    private bool _generating;
+    private bool _limitReached;
+    private int _limitUsed;
+    private int _limitMax = -1;
+    private string? _error;
+    private string _statusMessage = "Generando con IA...";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Auth.User is not null)
+        {
+            _project = await ProjectService.GetProjectByIdAsync(Auth.User.Id, ProjectId);
+            (_limitUsed, _limitMax) = await RequirementsService.GetGenerationLimitsAsync(Auth.User.Id);
+            _limitReached = _limitMax != -1 && _limitUsed >= _limitMax;
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleGenerate()
+    {
+        _generating = true;
+        _statusMessage = "Leyendo conversación...";
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            // Lee el valor directamente del DOM para capturar texto pegado
+            // que Blazor puede no haber recibido aún por el re-render (SignalR delay)
+            try
+            {
+                var domValue = await JS.InvokeAsync<string>("getElementValue", CancellationToken.None, "conversation-input");
+                if (!string.IsNullOrWhiteSpace(domValue))
+                    _conversationInput = domValue;
+            }
+            catch (Exception) { }
+
+            if (string.IsNullOrWhiteSpace(_conversationInput))
+            {
+                _error = "Por favor, pega la conversación con el cliente.";
+                return;
+            }
+
+            _statusMessage = "Analizando con IA... (puede tardar 30-60 s)";
+            StateHasChanged();
+
+            // CancellationToken.None para que una reconexión del circuito
+            // no cancele la llamada a Gemini mientras procesa
+            var result = await RequirementsService.GenerateAsync(
+                Auth.User!.Id,
+                new GenerateRequirementsRequest(ProjectId, _conversationInput.Trim()),
+                CancellationToken.None);
+
+            Nav.NavigateTo($"/generation/{result.Id}");
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _generating = false;
+            StateHasChanged();
+        }
+    }
+}

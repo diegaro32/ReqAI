@@ -65,10 +65,10 @@ else
 {
     <div class="flex items-center justify-center min-h-screen bg-surface-bg">
         <div class="flex flex-col items-center gap-4">
-            <img src="/images/logo-queryradar.png" alt="QueryRadar" class="w-12 h-12 rounded-xl object-contain" />
+            <img src="/images/favicon.png" alt="ReqAI" class="w-12 h-12 rounded-xl object-contain" />
             <div class="flex items-center gap-3 text-txt-secondary">
                 <div class="w-5 h-5 border-2 border-semantic-system/30 border-t-semantic-system rounded-full animate-spin"></div>
-                <span class="text-sm">Loading QueryRadar...</span>
+                <span class="text-sm">Cargando ReqAI...</span>
             </div>
         </div>
     </div>
@@ -93,12 +93,12 @@ else
     private static string GetFriendlyMessage(Exception ex) => ex switch
     {
         HttpRequestException httpEx when httpEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests
-            => "Our analysis agents are at capacity right now. Please wait a moment and try again.",
+            => "Demasiadas solicitudes. Por favor espera un momento e inténtalo de nuevo.",
         HttpRequestException
-            => "An external service is temporarily unavailable. Please try again in a few minutes.",
+            => "Un servicio externo no está disponible temporalmente. Inténtalo de nuevo en unos minutos.",
         TaskCanceledException or OperationCanceledException
-            => "The operation took too long to complete. Please try again.",
+            => "La operación tardó demasiado. Por favor inténtalo de nuevo.",
         InvalidOperationException ioEx => ioEx.Message,
-        _ => "An unexpected error occurred. Please try again or contact support if the problem persists."
+        _ => "Ocurrió un error inesperado. Inténtalo de nuevo o contacta soporte si el problema persiste."
     };
 }
