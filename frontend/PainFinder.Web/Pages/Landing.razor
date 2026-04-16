@@ -3,74 +3,61 @@
 @inject NavigationManager Nav
 @inject AuthService Auth
 
-@* ═══════════════════════════════════════════════════════════════
-   NAVBAR
-   ═══════════════════════════════════════════════════════════════ *@
+@* NAVBAR *@
 <nav class="fixed top-0 left-0 right-0 z-50 bg-surface-bg/80 backdrop-blur-xl border-b border-surface-border/50">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="/" class="flex items-center">
-            <img src="/images/logo-queryradar.png" alt="QueryRadar" class="h-10 object-contain" />
+        <a href="/" class="flex items-center gap-2">
+            <img src="/images/favicon.png" alt="ReqAI" class="h-8 object-contain" />
+            <span class="text-[15px] font-bold text-txt-primary">ReqAI</span>
         </a>
         <div class="hidden md:flex items-center gap-6 text-sm text-txt-secondary">
-            <a href="#how-it-works" class="hover:text-txt-primary transition-colors">Cómo Funciona</a>
-            <a href="#output" class="hover:text-txt-primary transition-colors">Ver Resultados</a>
-            <a href="#pricing" class="hover:text-txt-primary transition-colors">Precios</a>
+            <a href="#como-funciona" class="hover:text-txt-primary transition-colors">Cómo Funciona</a>
+            <a href="#resultados" class="hover:text-txt-primary transition-colors">Ver Resultados</a>
+            <a href="#precios" class="hover:text-txt-primary transition-colors">Precios</a>
         </div>
-        <div class="flex items-center gap-6">
+        <div class="flex items-center gap-4">
             @if (Auth.User is not null)
             {
-                <a href="/dashboard"
-                   class="btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white">
-                    Ir al Dashboard
-                </a>
+                <a href="/dashboard" class="btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white">Ir al Dashboard</a>
             }
             else
             {
                 <a href="/login" class="text-sm text-txt-secondary hover:text-txt-primary transition-colors hidden sm:block">Iniciar sesión</a>
-                <a href="/register"
-                   class="btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white">
-                    Comenzar Gratis
-                </a>
+                <a href="/register" class="btn-gradient rounded-xl px-4 py-2 text-sm font-semibold text-white">Empezar Gratis</a>
             }
         </div>
     </div>
 </nav>
 
-@* ═══════════════════════════════════════════════════════════════
-   HERO
-   ═══════════════════════════════════════════════════════════════ *@
+@* HERO *@
 <section class="pt-32 pb-10 px-6 relative overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-b from-semantic-system/[0.06] via-transparent to-transparent pointer-events-none"></div>
     <div class="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[900px] rounded-full bg-semantic-system/[0.04] blur-[120px] pointer-events-none"></div>
-    <div class="absolute top-40 left-[20%] w-[400px] h-[400px] rounded-full bg-semantic-highlight/[0.03] blur-[100px] pointer-events-none"></div>
-
     <div class="max-w-4xl mx-auto text-center relative z-10 pt-10">
+        <div class="inline-flex items-center gap-2 rounded-full border border-semantic-system/30 bg-semantic-system/5 px-4 py-1.5 text-[11px] font-semibold text-semantic-system uppercase tracking-widest mb-8">
+            Análisis de requerimientos con IA
+        </div>
         <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-txt-primary leading-[1.08] tracking-tight">
-            La mayoría de startups construyen<br />
-            <span class="bg-gradient-to-r from-semantic-pain via-semantic-cluster to-semantic-opportunity bg-clip-text text-transparent">lo que nadie pidió.</span>
+            Para de adivinar<br />
+            <span class="bg-gradient-to-r from-semantic-system via-semantic-opportunity to-semantic-highlight bg-clip-text text-transparent">qué quiso decir tu cliente.</span>
         </h1>
-
         <p class="mt-8 text-lg md:text-xl text-txt-secondary max-w-2xl mx-auto leading-relaxed">
-            ReqAI convierte conversaciones con clientes en requerimientos de software estructurados al instante — usando inteligencia artificial para que no pierdas ningún detalle.
+            Pega la conversación. ReqAI extrae requerimientos estructurados, detecta reglas de negocio,
+            identifica inconsistencias y te dice quién debe decidir qué — antes de escribir una sola línea de código.
         </p>
-
         <div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/register"
-               class="btn-gradient rounded-2xl px-10 py-4 text-base font-bold text-white">
-                Encontrar Oportunidades Reales →
+            <a href="/register" class="btn-gradient rounded-2xl px-10 py-4 text-base font-bold text-white">
+                Analizar mi primera conversación →
             </a>
-            <a href="#output"
-               class="rounded-2xl border border-surface-border/60 px-10 py-4 text-base font-medium text-txt-secondary hover:text-txt-primary hover:border-surface-border hover:bg-surface-hover/30 transition-all">
-                Ver Qué Obtienes ↓
+            <a href="#resultados" class="rounded-2xl border border-surface-border/60 px-10 py-4 text-base font-medium text-txt-secondary hover:text-txt-primary hover:border-surface-border hover:bg-surface-hover/30 transition-all">
+                Ver qué obtienes ↓
             </a>
         </div>
-        <p class="mt-5 text-xs text-txt-muted">Sin tarjeta de crédito · 3 búsquedas gratis · Resultados reales en menos de 5 minutos</p>
+        <p class="mt-5 text-xs text-txt-muted">Sin tarjeta de crédito · 3 análisis gratis · Resultado en segundos</p>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   PRODUCT PREVIEW (Dashboard mockup)
-   ═══════════════════════════════════════════════════════════════ *@
+@* PRODUCT PREVIEW *@
 <section class="pb-20 px-6">
     <div class="max-w-5xl mx-auto">
         <div class="rounded-3xl border border-surface-border/50 bg-surface-card/40 p-2 shadow-2xl shadow-black/30">
@@ -81,40 +68,23 @@
                         <div class="w-3 h-3 rounded-full bg-semantic-cluster/60"></div>
                         <div class="w-3 h-3 rounded-full bg-semantic-opportunity/60"></div>
                     </div>
-                    <div class="flex-1 flex justify-center">
-                        <div class="rounded-lg bg-surface-hover/50 border border-surface-border/40 px-4 py-1.5 text-xs text-txt-muted w-72 text-center">
-                            🔍 "freelancer invoicing tools"
-                        </div>
-                    </div>
+                    <span class="text-xs text-txt-muted font-mono ml-3">ReqAI — Análisis de Requerimientos</span>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    @foreach (var opp in _mockOpportunities)
+                    @foreach (var card in _mockOutputCards)
                     {
-                        <div class="rounded-xl bg-surface-card/60 border border-surface-border/40 p-4 space-y-3">
-                            <div class="flex items-start justify-between">
-                                <h4 class="text-[13px] font-semibold text-txt-primary leading-snug pr-2">@opp.Title</h4>
-                                <span class="shrink-0 text-[10px] font-bold rounded-lg px-2 py-0.5 @opp.BadgeClass">@opp.Decision</span>
+                        <div class="rounded-xl bg-surface-card/60 border @card.BorderClass p-4 space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold @card.LabelClass uppercase tracking-wider">@card.Section</span>
                             </div>
-                            <div>
-                                <div class="flex items-center justify-between text-[10px] text-txt-muted mb-1">
-                                    <span>Realidad de Mercado</span>
-                                    <span class="font-bold @opp.ScoreColor">@opp.Score%</span>
-                                </div>
-                                <div class="w-full bg-surface-border/40 rounded-full h-1.5">
-                                    <div class="h-1.5 rounded-full @opp.BarColor" style="width: @(opp.Score)%"></div>
-                                </div>
-                            </div>
-                            <div class="rounded-lg bg-semantic-pain/5 border border-semantic-pain/15 px-2.5 py-1.5">
-                                <p class="text-[10px] text-txt-primary italic">"@opp.Quote"</p>
-                                <p class="text-[9px] text-txt-muted mt-0.5">@opp.Source</p>
-                            </div>
-                            <div class="flex gap-1.5 flex-wrap">
-                                @foreach (var tag in opp.Tags)
+                            <ul class="space-y-1.5">
+                                @foreach (var item in card.Items)
                                 {
-                                    <span class="rounded-full bg-surface-bg/60 border border-surface-border/60 text-txt-muted px-2 py-0.5 text-[9px]">@tag</span>
+                                    <li class="flex items-start gap-1.5 text-[11px] text-txt-secondary leading-relaxed">
+                                        <span class="@card.DotClass shrink-0 mt-0.5">•</span>@item
+                                    </li>
                                 }
-                            </div>
+                            </ul>
                         </div>
                     }
                 </div>
@@ -123,9 +93,7 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   TRUST BAR
-   ═══════════════════════════════════════════════════════════════ *@
+@* TRUST BAR *@
 <section class="py-16 px-6 border-y border-surface-border/30">
     <div class="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-10 text-center">
         @foreach (var stat in _stats)
@@ -138,14 +106,14 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   PROBLEM
-   ═══════════════════════════════════════════════════════════════ *@
+@* PROBLEM *@
 <section class="py-28 px-6">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-14">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Estás construyendo a ciegas.<br />Y lo sabes.</h2>
-            <p class="mt-4 text-lg text-txt-secondary max-w-xl mx-auto">La principal razón por la que las startups fracasan no es el código malo ni el marketing débil. Es construir algo que nadie necesita. Y ahora mismo, la mayoría de los fundadores siguen adivinando.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Los proyectos no fallan en el código.<br />Fallan en la conversación anterior.</h2>
+            <p class="mt-4 text-lg text-txt-secondary max-w-xl mx-auto">
+                El cliente dijo una cosa. Tú entendiste otra. El equipo interpretó una tercera. Tres semanas después, nadie sabe por qué nada encaja.
+            </p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             @foreach (var pain in _problems)
@@ -160,40 +128,29 @@
             }
         </div>
         <div class="text-center mt-10">
-            <p class="text-sm text-txt-secondary mb-5">Cada mes que construyes lo incorrecto es un mes que nunca recuperarás.</p>
-            <a href="/register"
-               class="btn-gradient inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white">
-                Deja de Construir a Ciegas
-            </a>
+            <p class="text-sm text-txt-secondary mb-5">Cada semana que arrancas sin claridad es una semana de retrabajo garantizado.</p>
+            <a href="/register" class="btn-gradient inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white">Empieza con claridad</a>
         </div>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   THE INSIGHT + SOLUTION
-   ═══════════════════════════════════════════════════════════════ *@
+@* SOLUTION *@
 <section class="py-28 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-10">
-            <span class="text-[11px] font-bold text-semantic-opportunity uppercase tracking-widest">El insight</span>
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary mt-3">Internet ya sabe<br />qué deberías construir.</h2>
-            <p class="mt-4 text-lg text-txt-secondary max-w-2xl mx-auto">Ahora mismo, miles de personas publican en Reddit, HackerNews y foros sobre problemas que no tienen una buena solución. Esas quejas son tu hoja de ruta — pero están enterradas en millones de conversaciones. No puedes leerlas todas. <span class="text-txt-primary font-semibold">QueryRadar sí puede.</span></p>
+            <span class="text-[11px] font-bold text-semantic-opportunity uppercase tracking-widest">La solución</span>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary mt-3">Conversación sucia →<br />Especificación lista para construir.</h2>
+            <p class="mt-4 text-lg text-txt-secondary max-w-2xl mx-auto">
+                No es un resumen. No es un chatbot. ReqAI actúa como un arquitecto senior que lee entre líneas,
+                detecta lo que falta y estructura todo en un documento que tu equipo puede usar desde mañana.
+            </p>
         </div>
-
-        <div class="glass-card p-8 border border-semantic-system/30 mt-14">
-            <div class="text-center mb-8">
-                <span class="text-[11px] font-bold text-semantic-system uppercase tracking-widest">La solución</span>
-                <h3 class="text-2xl font-bold text-txt-primary mt-2">Conversaciones reales → Oportunidades validadas</h3>
-                <p class="text-sm text-txt-secondary mt-2 max-w-lg mx-auto">QueryRadar lee lo que los humanos no pueden — a escala. Detecta el dolor, lo agrupa, punta el mercado y te da una decisión clara: constrúelo o pasa.</p>
-            </div>
-
+        <div class="glass-card p-8 border border-semantic-system/30 mt-10">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 @foreach (var step in _solutionSteps)
                 {
                     <div class="text-center">
-                        <div class="w-16 h-16 mx-auto rounded-3xl bg-semantic-system/10 border border-semantic-system/20 flex items-center justify-center text-2xl mb-5">
-                            @step.Icon
-                        </div>
+                        <div class="w-16 h-16 mx-auto rounded-3xl bg-semantic-system/10 border border-semantic-system/20 flex items-center justify-center text-2xl mb-5">@step.Icon</div>
                         <div class="text-[10px] font-bold text-semantic-system uppercase tracking-widest mb-2">@step.Label</div>
                         <h3 class="text-base font-semibold text-txt-primary mb-2.5">@step.Title</h3>
                         <p class="text-sm text-txt-secondary leading-relaxed">@step.Description</p>
@@ -204,16 +161,13 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   HOW IT WORKS (Visual pipeline)
-   ═══════════════════════════════════════════════════════════════ *@
-<section id="how-it-works" class="py-28 px-6">
+@* HOW IT WORKS *@
+<section id="como-funciona" class="py-28 px-6">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">De cero a oportunidad validada.<br />En menos de 5 minutos.</h2>
-            <p class="mt-4 text-lg text-txt-secondary">Sin investigación manual. Sin adivinanzas. Solo evidencia.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">De conversación a especificación.<br />En menos de 60 segundos.</h2>
+            <p class="mt-4 text-lg text-txt-secondary">Sin plantillas. Sin trabajo manual. Solo pega y analiza.</p>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             @foreach (var step in _pipelineSteps)
             {
@@ -222,9 +176,8 @@
                     {
                         <div class="hidden md:block absolute -right-3.5 top-1/2 -translate-y-1/2 text-txt-muted/30 text-lg z-10">→</div>
                     }
-                    <div class="w-12 h-12 mx-auto rounded-2xl bg-semantic-system/10 flex items-center justify-center text-xl mb-4 group-hover:bg-semantic-system/20 transition-colors">
-                        @step.Icon
-                    </div>
+                    <div class="w-12 h-12 mx-auto rounded-2xl bg-semantic-system/10 flex items-center justify-center text-xl mb-4 group-hover:bg-semantic-system/20 transition-colors">@step.Icon</div>
+                    <div class="text-[10px] font-bold text-semantic-system/60 uppercase tracking-widest mb-1">Paso @step.Number</div>
                     <h3 class="text-sm font-semibold text-txt-primary mb-2">@step.Title</h3>
                     <p class="text-[12px] text-txt-secondary leading-relaxed">@step.Description</p>
                 </div>
@@ -233,22 +186,18 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   OUTPUT = OUTCOME (what you actually get)
-   ═══════════════════════════════════════════════════════════════ *@
-<section class="py-28 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
+@* WHAT YOU GET *@
+<section id="resultados" class="py-28 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">No datos. No gráficas.<br /><span class="text-semantic-opportunity">Respuestas claras.</span></h2>
-            <p class="mt-4 text-lg text-txt-secondary">Cada búsqueda te da inteligencia estructurada y accionable — no otro dashboard en el que mirar.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">No es un resumen.<br /><span class="text-semantic-opportunity">Es un plan de construcción.</span></h2>
+            <p class="mt-4 text-lg text-txt-secondary">Cada análisis incluye todo lo que un equipo necesita para empezar sin preguntas.</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @foreach (var value in _coreValues)
             {
                 <div class="glass-card p-8 border border-surface-border/40 hover:border-surface-border/60 transition-colors flex gap-5">
-                    <div class="w-12 h-12 shrink-0 rounded-2xl @value.ColorClass flex items-center justify-center text-xl">
-                        @value.Icon
-                    </div>
+                    <div class="w-12 h-12 shrink-0 rounded-2xl @value.ColorClass flex items-center justify-center text-xl">@value.Icon</div>
                     <div>
                         <h3 class="text-[15px] font-semibold text-txt-primary mb-2">@value.Title</h3>
                         <p class="text-sm text-txt-secondary leading-relaxed">@value.Description</p>
@@ -257,149 +206,22 @@
             }
         </div>
         <div class="text-center mt-10">
-            <a href="/register"
-               class="btn-gradient inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white">
-                Ver en Acción — Gratis
-            </a>
+            <a href="/register" class="btn-gradient inline-block rounded-xl px-6 py-2.5 text-sm font-semibold text-white">Ver mi primer análisis — Gratis</a>
         </div>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   OPPORTUNITY PREVIEW (realistic output)
-   ═══════════════════════════════════════════════════════════════ *@
-<section id="output" class="py-28 px-6">
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-14">
-            <span class="text-[11px] font-bold text-semantic-highlight uppercase tracking-widest">Resultado real</span>
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary mt-3">Una búsqueda. Una keyword.<br />Esto es lo que obtienes.</h2>
-            <p class="mt-4 text-lg text-txt-secondary">Esto no es una maqueta. Este es el resultado real de QueryRadar para la keyword <span class="text-txt-primary font-mono">"freelancer invoicing"</span>.</p>
-        </div>
-
-        <div class="glass-card p-6 border border-semantic-system/20 space-y-5">
-            <div class="flex flex-col sm:flex-row items-start justify-between gap-3">
-                <div>
-                    <h3 class="text-[15px] font-semibold text-txt-primary">Herramienta de facturación ligera para freelancers</h3>
-                    <p class="text-xs text-txt-muted mt-0.5">SaaS · Freelancer Tools · Billing Automation</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-                    <span class="rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold">🟢 STRONG YES</span>
-                    <span class="rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2.5 py-0.5 text-[10px] font-bold">87%</span>
-                </div>
-            </div>
-
-            <div class="rounded-xl bg-surface-bg/60 border border-surface-border/40 p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider">Puntuación de Realidad de Mercado</span>
-                    <span class="text-[13px] font-bold text-emerald-400">87%</span>
-                </div>
-                <div class="w-full bg-surface-border/40 rounded-full h-1.5 mb-3">
-                    <div class="h-1.5 rounded-full bg-emerald-400" style="width: 87%"></div>
-                </div>
-                <div class="grid grid-cols-5 gap-1 text-center">
-                    <div class="rounded-lg bg-surface-bg/80 p-1.5"><div class="text-[10px] text-txt-muted">Dolor</div><div class="text-[12px] font-bold text-emerald-400">91</div></div>
-                    <div class="rounded-lg bg-surface-bg/80 p-1.5"><div class="text-[10px] text-txt-muted">Frec</div><div class="text-[12px] font-bold text-emerald-400">84</div></div>
-                    <div class="rounded-lg bg-surface-bg/80 p-1.5"><div class="text-[10px] text-txt-muted">Urgencia</div><div class="text-[12px] font-bold text-emerald-400">82</div></div>
-                    <div class="rounded-lg bg-surface-bg/80 p-1.5"><div class="text-[10px] text-txt-muted">$Intent</div><div class="text-[12px] font-bold text-emerald-400">89</div></div>
-                    <div class="rounded-lg bg-surface-bg/80 p-1.5"><div class="text-[10px] text-txt-muted">Brecha</div><div class="text-[12px] font-bold text-yellow-400">71</div></div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="rounded-lg bg-semantic-cluster/5 border border-semantic-cluster/20 p-3">
-                    <span class="text-[11px] font-semibold text-semantic-cluster uppercase tracking-wider">🎯 Cliente Ideal</span>
-                    <p class="text-[13px] text-txt-primary font-medium mt-1">Desarrollador / diseñador freelance</p>
-                    <p class="text-[11px] text-txt-secondary mt-0.5">Ganando $3k–$10k/mes, facturando 2–5 clientes, frustrado con la complejidad de FreshBooks/Wave</p>
-                </div>
-                <div class="space-y-1.5">
-                    <span class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider">Citas de evidencia</span>
-                    <div class="rounded-lg bg-semantic-pain/5 border border-semantic-pain/15 px-2.5 py-1.5">
-                        <p class="text-[11px] text-txt-primary italic">"I spend 3 hours a week on invoicing. I just want to click send."</p>
-                        <p class="text-[9px] text-txt-muted mt-0.5">r/freelance · web developer</p>
-                    </div>
-                    <div class="rounded-lg bg-semantic-pain/5 border border-semantic-pain/15 px-2.5 py-1.5">
-                        <p class="text-[11px] text-txt-primary italic">"FreshBooks is overkill for a solo freelancer. I don't need accounting software."</p>
-                        <p class="text-[9px] text-txt-muted mt-0.5">r/startups · indie hacker</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="rounded-lg bg-surface-bg/60 border border-surface-border/30 p-3">
-                <span class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider">Competencia y Brecha</span>
-                <div class="flex flex-wrap gap-1.5 mt-2">
-                    <span class="rounded-full bg-surface-bg border border-surface-border/60 text-txt-muted px-2 py-0.5 text-[10px]">FreshBooks</span>
-                    <span class="rounded-full bg-surface-bg border border-surface-border/60 text-txt-muted px-2 py-0.5 text-[10px]">Wave</span>
-                    <span class="rounded-full bg-surface-bg border border-surface-border/60 text-txt-muted px-2 py-0.5 text-[10px]">Bonsai</span>
-                    <span class="rounded-full bg-surface-bg border border-surface-border/60 text-txt-muted px-2 py-0.5 text-[10px]">Stripe Invoicing</span>
-                </div>
-                <p class="text-[11px] text-txt-secondary mt-2">Todas las herramientas son demasiado complejas para freelancers o no tienen automatización de facturación recurrente. La brecha es una herramienta simple enfocada solo en enviar facturas rápido.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-@* ═══════════════════════════════════════════════════════════════
-   ACTION PLAN (Key differentiator)
-   ═══════════════════════════════════════════════════════════════ *@
-<section class="py-28 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-14">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Otras herramientas te dan datos.<br /><span class="text-semantic-system">Nosotros te damos el siguiente paso.</span></h2>
-            <p class="mt-4 text-lg text-txt-secondary">Cada oportunidad incluye un plan de ejecución paso a paso. Cópialo. Pégalo. Ejecútalo mañana.</p>
-        </div>
-
-        <div class="glass-card p-6 border border-semantic-system/30 space-y-4">
-            <div class="flex items-center gap-2 mb-1">
-                <span class="text-lg">⚡</span>
-                <h3 class="text-[14px] font-semibold text-txt-primary">Plan de Acción — Herramienta de Facturación Freelance</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3.5 space-y-2">
-                    <div class="text-[10px] font-bold text-semantic-highlight uppercase tracking-wider">🎯 A quién dirigirse</div>
-                    <p class="text-[12px] text-txt-primary">Desarrolladores web freelance ganando $3k–$10k/mes en Upwork y Toptal, facturando 2–5 clientes recurrentes</p>
-                </div>
-                <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3.5 space-y-2">
-                    <div class="text-[10px] font-bold text-semantic-opportunity uppercase tracking-wider">💬 Propuesta de valor</div>
-                    <p class="text-[12px] text-txt-primary">Ayudamos a devs freelance a enviar facturas en 30 segundos en lugar de perder 3 horas/semana en FreshBooks</p>
-                </div>
-            </div>
-
-            <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3.5 space-y-2">
-                <div class="text-[10px] font-bold text-semantic-cluster uppercase tracking-wider">✉️ Mensaje de contacto listo</div>
-                <div class="rounded-lg bg-surface-bg/80 border border-surface-border/30 p-3 text-[12px] text-txt-secondary leading-relaxed italic">
-                    "Hey! I saw your post about invoicing headaches. I'm building a dead-simple tool that lets you send an invoice in 30 seconds — no accounting features, no bloat. Would you try a free beta?"
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="rounded-lg bg-surface-bg/60 border border-surface-border/40 p-3.5 space-y-2">
-                    <div class="text-[10px] font-bold text-semantic-pain uppercase tracking-wider">🧪 Test de validación</div>
-                    <p class="text-[12px] text-txt-primary">Crea una landing en Carrd con "Envía tu primera factura en 30 segundos" — recolecta emails por 7 días. Objetivo: 50 registros.</p>
-                </div>
-                <div class="rounded-lg bg-semantic-system/5 border border-semantic-system/20 p-3.5 space-y-2">
-                    <div class="text-[10px] font-bold text-semantic-system uppercase tracking-wider">🌅 Mañana a las 9am</div>
-                    <p class="text-[12px] text-txt-primary font-medium">Publica en r/freelance preguntando: "¿Cómo manejas la facturación?" — Envía DM a los 5 respondientes más frustrados.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-@* ═══════════════════════════════════════════════════════════════
-   UNFAIR ADVANTAGE
-   ═══════════════════════════════════════════════════════════════ *@
+@* DIFFERENTIATION *@
 <section class="py-28 px-6">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-14">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Lo que toma semanas de investigación,<br /><span class="text-semantic-highlight">hecho en menos de 5 minutos.</span></h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">No es ChatGPT con un prompt bonito.<br /><span class="text-semantic-highlight">Es una herramienta de ingeniería.</span></h2>
         </div>
-
         <div class="glass-card p-8 border border-surface-border/40">
             <div class="grid grid-cols-3 gap-4 text-center mb-6">
                 <div></div>
-                <div class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">Investigación Manual</div>
-                <div class="text-[10px] font-bold text-semantic-system uppercase tracking-wider">QueryRadar</div>
+                <div class="text-[10px] font-bold text-txt-muted uppercase tracking-wider">ChatGPT / Resumen</div>
+                <div class="text-[10px] font-bold text-semantic-system uppercase tracking-wider">ReqAI</div>
             </div>
             @foreach (var row in _comparisonRows)
             {
@@ -413,12 +235,10 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   USE CASES
-   ═══════════════════════════════════════════════════════════════ *@
+@* WHO IT'S FOR *@
 <section class="py-20 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
     <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-2xl md:text-3xl font-bold text-txt-primary mb-10">Creado para quien ya está harto de adivinar.</h2>
+        <h2 class="text-2xl md:text-3xl font-bold text-txt-primary mb-10">Para quien construye software con clientes reales.</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             @foreach (var useCase in _useCases)
             {
@@ -432,28 +252,23 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   PRICING CONTEXT
-   ═══════════════════════════════════════════════════════════════ *@
+@* PRICING CONTEXT *@
 <section class="pt-20 pb-8 px-6">
     <div class="max-w-2xl mx-auto text-center">
         <p class="text-lg text-txt-secondary leading-relaxed">
-            El proyecto secundario fallido promedio cuesta <span class="text-semantic-pain font-semibold">3–6 meses</span> y miles en costo de oportunidad.
-            Una oportunidad validada de QueryRadar puede salvarte de construir lo incorrecto por completo.
+            Un proyecto mal especificado cuesta en promedio <span class="text-semantic-pain font-semibold">30–40% más</span> en tiempo de desarrollo.
+            Un análisis claro antes de empezar puede ahorrarte semanas.
         </p>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   PRICING
-   ═══════════════════════════════════════════════════════════════ *@
-<section id="pricing" class="py-20 px-6">
+@* PRICING *@
+<section id="precios" class="py-20 px-6">
     <div class="max-w-5xl mx-auto">
         <div class="text-center mb-8">
             <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Precios simples. Empieza gratis.</h2>
-            <p class="mt-4 text-lg text-txt-secondary">Mejora cuando estés listo para moverse más rápido.</p>
+            <p class="mt-4 text-lg text-txt-secondary">Escala cuando tu equipo lo necesite.</p>
         </div>
-
         <div class="flex items-center justify-center gap-3 mb-12">
             <span class="text-sm @(_annual ? "text-txt-muted" : "text-txt-primary font-semibold")">Mensual</span>
             <button @onclick="() => _annual = !_annual"
@@ -463,20 +278,16 @@
             <span class="text-sm @(_annual ? "text-txt-primary font-semibold" : "text-txt-muted")">Anual</span>
             <span class="rounded-full bg-semantic-opportunity/15 text-semantic-opportunity px-2.5 py-0.5 text-[10px] font-bold">Ahorra 20%</span>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             @foreach (var plan in _plans)
             {
                 var isPopular = plan.Name == "Pro";
                 var price = _annual ? plan.AnnualPrice : plan.MonthlyPrice;
                 var effectiveMonthly = _annual ? Math.Round(plan.AnnualPrice / 12m, 0) : plan.MonthlyPrice;
-
                 <div class="glass-card p-7 border @(isPopular ? "border-semantic-system/50 ring-1 ring-semantic-system/20" : "border-surface-border/40") relative flex flex-col">
                     @if (isPopular)
                     {
-                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-semantic-system px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">
-                            Más Popular
-                        </div>
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-semantic-system px-3 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider">Más Popular</div>
                     }
                     <h3 class="text-base font-bold text-txt-primary">@plan.Name</h3>
                     <div class="mt-3 mb-1">
@@ -491,20 +302,17 @@
                     {
                         <p class="text-[11px] text-txt-muted mb-3">@(plan.MonthlyPrice == 0 ? "Gratis para siempre" : "Facturado mensualmente")</p>
                     }
-
                     <ul class="space-y-2 mb-6 flex-1">
                         @foreach (var feature in plan.Features)
                         {
                             <li class="flex items-start gap-2 text-xs text-txt-secondary">
-                                <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
-                                @feature
+                                <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>@feature
                             </li>
                         }
                     </ul>
-
                     <a href="/register"
                        class="block text-center rounded-2xl py-3 text-sm font-semibold transition-all @(isPopular ? "btn-gradient" : "bg-surface-hover/60 text-txt-primary hover:bg-surface-hover border border-surface-border/60")">
-                        @(plan.MonthlyPrice == 0 ? "Comenzar Gratis" : "Comenzar Prueba Gratis")
+                        @(plan.MonthlyPrice == 0 ? "Empezar Gratis" : "Empezar Prueba Gratis")
                     </a>
                 </div>
             }
@@ -512,22 +320,19 @@
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   BUILT FOR FOUNDERS (Social proof / trust)
-   ═══════════════════════════════════════════════════════════════ *@
+@* SOCIAL PROOF *@
 <section class="py-28 px-6 bg-gradient-to-b from-transparent via-surface-card/20 to-transparent">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-14">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Los fundadores ya no adivinan.</h2>
-            <p class="mt-4 text-lg text-txt-secondary max-w-xl mx-auto">Validan primero. QueryRadar nació de la misma frustración — pasar meses en ideas que nadie quería.</p>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary">Menos reuniones de "¿qué quisiste decir?".<br />Más código que funciona.</h2>
+            <p class="mt-4 text-lg text-txt-secondary max-w-xl mx-auto">Equipos que usan ReqAI empiezan cada proyecto con un documento que todos entienden.</p>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             @foreach (var proof in _socialProofs)
             {
                 <div class="glass-card p-7 border border-surface-border/40">
                     <div class="flex items-center gap-2 mb-3">
-                        <div class="w-8 h-8 rounded-full bg-semantic-system/10 border border-semantic-system/20 flex items-center justify-center text-sm">@proof.Avatar</div>
+                        <div class="w-8 h-8 rounded-full bg-semantic-system/10 border border-semantic-system/20 flex items-center justify-center text-sm font-bold text-txt-secondary">@proof.Initials</div>
                         <div>
                             <p class="text-[12px] font-semibold text-txt-primary">@proof.Name</p>
                             <p class="text-[10px] text-txt-muted font-mono">@proof.Role</p>
@@ -537,59 +342,49 @@
                 </div>
             }
         </div>
-
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="text-center glass-card p-4 border border-surface-border/30">
-                <div class="text-lg font-bold text-semantic-system">🎯</div>
-                <p class="text-[11px] text-txt-secondary mt-1">Enfoque problema primero</p>
+                <p class="text-[13px] font-semibold text-txt-primary mt-1">Requerimientos sin ambigüedad</p>
             </div>
             <div class="text-center glass-card p-4 border border-surface-border/30">
-                <div class="text-lg font-bold text-semantic-highlight">⚡</div>
-                <p class="text-[11px] text-txt-secondary mt-1">5 min al primer insight</p>
+                <p class="text-[13px] font-semibold text-txt-primary mt-1">Análisis en segundos</p>
             </div>
             <div class="text-center glass-card p-4 border border-surface-border/30">
-                <div class="text-lg font-bold text-semantic-opportunity">🛡️</div>
-                <p class="text-[11px] text-txt-secondary mt-1">Sin tarjeta de crédito</p>
+                <p class="text-[13px] font-semibold text-txt-primary mt-1">Sin tarjeta de crédito</p>
             </div>
             <div class="text-center glass-card p-4 border border-surface-border/30">
-                <div class="text-lg font-bold text-semantic-cluster">🚀</div>
-                <p class="text-[11px] text-txt-secondary mt-1">Lanza con confianza</p>
+                <p class="text-[13px] font-semibold text-txt-primary mt-1">Listo para tu próximo proyecto</p>
             </div>
         </div>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   FINAL CTA
-   ═══════════════════════════════════════════════════════════════ *@
+@* FINAL CTA *@
 <section class="py-28 px-6">
     <div class="max-w-3xl mx-auto text-center">
         <div class="glass-card p-14 border border-semantic-system/20 bg-gradient-to-br from-semantic-system/[0.06] to-transparent">
-            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary mb-4">El próximo producto ganador<br />está escondido en un hilo de Reddit.</h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-txt-primary mb-4">Tu próxima reunión con el cliente<br />no debería terminar con dudas.</h2>
             <p class="text-lg text-txt-secondary mb-10 max-w-lg mx-auto">
-                Alguien está quejándose ahora mismo de un problema que tú podrías resolver. Deja de hacer scroll. Empieza a escanear.
+                Pega la conversación. Obtén claridad total. Empieza a construir lo correcto desde el primer día.
             </p>
-            <a href="/register"
-               class="btn-gradient inline-block rounded-2xl px-10 py-4 text-base font-bold text-white">
-                Encuentra Tu Primera Oportunidad — Gratis
+            <a href="/register" class="btn-gradient inline-block rounded-2xl px-10 py-4 text-base font-bold text-white">
+                Analizar mi primera conversación — Gratis
             </a>
-            <p class="mt-5 text-xs text-txt-muted">3 búsquedas gratis · Sin tarjeta de crédito · Resultados en minutos</p>
+            <p class="mt-5 text-xs text-txt-muted">Sin tarjeta de crédito · 3 análisis gratis · Resultados en segundos</p>
         </div>
     </div>
 </section>
 
-@* ═══════════════════════════════════════════════════════════════
-   FOOTER
-   ═══════════════════════════════════════════════════════════════ *@
+@* FOOTER *@
 <footer class="border-t border-surface-border/50 py-10 px-6">
     <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-3">
             <img src="/images/favicon.png" alt="ReqAI" class="h-7 object-contain" />
-            <span class="text-sm text-txt-muted">© @DateTime.UtcNow.Year Todos los derechos reservados.</span>
+            <span class="text-sm text-txt-muted">© @DateTime.UtcNow.Year ReqAI · Todos los derechos reservados.</span>
         </div>
         <div class="flex items-center gap-6 text-xs text-txt-muted">
-            <a href="#how-it-works" class="hover:text-txt-secondary transition-colors">Cómo Funciona</a>
-            <a href="#pricing" class="hover:text-txt-secondary transition-colors">Precios</a>
+            <a href="#como-funciona" class="hover:text-txt-secondary transition-colors">Cómo Funciona</a>
+            <a href="#precios" class="hover:text-txt-secondary transition-colors">Precios</a>
             <a href="/login" class="hover:text-txt-secondary transition-colors">Iniciar sesión</a>
             <a href="/register" class="hover:text-txt-secondary transition-colors">Registrarse</a>
         </div>
@@ -599,109 +394,105 @@
 @code {
     private bool _annual;
 
-    // ── Models ──
     private record SolutionStep(string Icon, string Label, string Title, string Description);
     private record PipelineStep(int Number, string Icon, string Title, string Description);
     private record CoreValue(string Icon, string Title, string Description, string ColorClass);
     private record PlanInfo(string Name, decimal MonthlyPrice, decimal AnnualPrice, List<string> Features);
     private record Problem(string Title, string Description);
     private record Stat(string Value, string Label);
-    private record MockOpp(string Title, string Decision, string BadgeClass, int Score, string ScoreColor, string BarColor, string Quote, string Source, string[] Tags);
-    private record SocialProof(string Avatar, string Name, string Role, string Quote);
+    private record MockOutputCard(string Section, string[] Items, string BorderClass, string LabelClass, string DotClass);
+    private record SocialProof(string Initials, string Name, string Role, string Quote);
     private record ComparisonRow(string Label, string Manual, string QueryRadar);
     private record UseCase(string Icon, string Title, string Description);
 
-    // ── Solution steps ──
+    private static readonly MockOutputCard[] _mockOutputCards =
+    [
+        new("Requerimientos Funcionales", [
+            "El sistema deberá permitir crear una factura en menos de 30 segundos",
+            "El sistema deberá enviar la factura por email con un clic",
+            "El administrador podrá ver el historial de todas las facturas emitidas"
+        ], "border-semantic-opportunity/25", "text-semantic-opportunity", "text-semantic-opportunity"),
+        new("Inconsistencias Detectadas", [
+            "El cliente menciona 'roles de admin' pero luego dice 'solo yo lo usaré' — ¿sistema multiusuario?",
+            "Se habla de 'facturación recurrente' pero no se define frecuencia ni proceso de cancelación"
+        ], "border-semantic-pain/25", "text-semantic-pain", "text-semantic-pain"),
+        new("Puntos de Decisión", [
+            "¿El sistema debe integrarse con pasarelas de pago o solo generar el documento?",
+            "¿Se requiere multimoneda? El cliente mencionó 'clientes en el extranjero' sin especificar"
+        ], "border-semantic-cluster/25", "text-semantic-cluster", "text-semantic-cluster"),
+    ];
+
     private static readonly SolutionStep[] _solutionSteps =
     [
-        new("🔍", "Paso 1", "Encuentra el dolor", "Ingresa un tema. Escaneamos Reddit, HackerNews, foros y comunidades para encontrar con qué luchan las personas ahora mismo."),
-        new("📊", "Paso 2", "Valida la demanda", "La IA punta cada oportunidad en 5 factores de mercado. Obtienes una decisión clara de construir/no construir respaldada por evidencia real."),
-        new("⚡", "Paso 3", "Ejecuta mañana", "Obtén un plan de acción completo: tu cliente ideal, mensaje de contacto, test de validación y qué hacer a las 9am mañana.")
+        new("📋", "Paso 1", "Pega la conversación", "Copia el chat, el correo o las notas de la reunión. Sin formato especial. Sin plantillas."),
+        new("🧠", "Paso 2", "La IA la analiza en profundidad", "ReqAI detecta requerimientos, reglas de negocio, inconsistencias, riesgos y puntos de decisión que tú podrías pasar por alto."),
+        new("📄", "Paso 3", "Obtienes un documento listo", "Requerimientos agrupados, responsabilidades asignadas y decisiones pendientes — todo en un solo lugar, listo para compartir con tu equipo.")
     ];
 
-    // ── Pipeline ──
     private static readonly PipelineStep[] _pipelineSteps =
     [
-        new(1, "🎯", "Tú eliges un nicho", "Ingresa cualquier tema: 'herramientas freelance', 'dueños de gym', 'equipos remotos'. Lo expandimos en queries enfocadas en dolor."),
-        new(2, "🧠", "La IA lee todo", "Escaneamos miles de posts reales. La IA detecta frustración, punta intensidad y encuentra patrones."),
-        new(3, "💡", "Emergen oportunidades", "Las señales de dolor se agrupan en oportunidades con ICP, brechas de competencia, puntuaciones de mercado y evidencia real."),
-        new(4, "⚡", "Tú ejecutas", "Obtén un plan de acción listo para copiar: a quién contactar, qué decir, cómo validar, qué construir.")
+        new(1, "💬", "Pega la conversación", "El chat con el cliente, las notas de la reunión, el hilo de WhatsApp. Tal como está."),
+        new(2, "🔍", "ReqAI la limpia y analiza", "Elimina el ruido, detecta lo importante y piensa como un arquitecto senior que prepara specs reales."),
+        new(3, "📋", "Obtienes la especificación", "Requerimientos funcionales, reglas de negocio, modelo de dominio, ciclo de vida de entidades y más."),
+        new(4, "🚀", "Tu equipo puede empezar", "Con decisiones claras, responsabilidades asignadas y riesgos identificados — sin reuniones extra.")
     ];
 
-    // ── Core values ──
     private static readonly CoreValue[] _coreValues =
     [
-        new("🎯", "Decisión Construir/No Construir", "Sin ambigüedad. Cada oportunidad obtiene un veredicto claro basado en evidencia real del mercado — no en tu intuición.", "bg-semantic-opportunity/10"),
-        new("📊", "Puntuación de Realidad de Mercado", "5 factores puntuados: intensidad del dolor, frecuencia, urgencia, intención de pago y brecha de competencia. Ves exactamente dónde está la oportunidad.", "bg-semantic-highlight/10"),
-        new("👤", "ICP Definido", "Sabe exactamente quién es tu primer cliente — su rol, contexto, dónde encontrarlo y qué le frustra de las soluciones actuales.", "bg-semantic-cluster/10"),
-        new("🗣️", "Citas Reales de Usuarios", "No suposiciones. Quejas reales de personas reales — la prueba que necesitas para validar antes de construir.", "bg-semantic-pain/10"),
-        new("🏆", "Análisis de Competencia y Brecha", "Ve qué herramientas ya existen, por qué la gente las odia y dónde está la brecha. Tu ventaja injusta empieza aquí.", "bg-semantic-system/10"),
-        new("⚡", "Plan de Ejecución", "ICP, mensaje de contacto, test de validación, estrategias de precios y qué hacer mañana a las 9am. No un informe — un manual.", "bg-semantic-highlight/10")
+        new("🏗️", "Modelo de Dominio", "Identifica las entidades clave del sistema y sus relaciones. Tu equipo sabe exactamente con qué está trabajando antes de escribir código.", "bg-semantic-highlight/10"),
+        new("⚠️", "Inconsistencias y Conflictos", "Detecta contradicciones en la conversación antes de que se conviertan en bugs o retrabajo. Con el riesgo exacto de cada conflicto.", "bg-semantic-pain/10"),
+        new("🔀", "Puntos de Decisión", "Para cada ambigüedad importante: qué hay que decidir, las opciones disponibles y la recomendación basada en contexto.", "bg-semantic-cluster/10"),
+        new("👥", "Responsabilidades y Acciones", "Quién debe hacer qué. Product Owner, Tech Lead, Backend Dev — con acciones concretas y accionables para cada rol.", "bg-semantic-opportunity/10"),
+        new("📊", "Priorización MVP", "Separa lo que debe existir desde el día uno de lo que puede esperar. Core, Importante y Opcional — sin debates.", "bg-semantic-system/10"),
+        new("🔥", "Riesgos de Implementación", "Las áreas que pueden fallar, por qué son complejas y cómo mitigarlas. Lo que un senior vería y un junior pasaría por alto.", "bg-semantic-highlight/10")
     ];
 
-    // ── Problems ──
     private static readonly Problem[] _problems =
     [
-        new("No tienes una idea validada", "Tienes habilidades y motivación — pero cero evidencia de que alguien pagaría por lo que estás pensando construir."),
-        new("Lanzas al silencio", "Codificas durante meses, lanzas en Product Hunt, obtienes 3 upvotes y te das cuenta de que nadie lo necesitaba. El 42% de las startups mueren así."),
-        new("Confías en tu intuición antes que en los datos", "'Sientes' que la idea es buena. Pero los sentimientos no son evidencia. Sin señales reales de demanda, estás apostando tu tiempo."),
-        new("No puedes leer todo internet", "Miles de personas se quejan de problemas sin resolver ahora mismo. Nunca los encontrarás scrolleando Reddit manualmente.")
+        new("Requerimientos que cambian cada semana", "El cliente 'recuerda' cosas que nunca dijo. Sin un documento estructurado, no hay forma de demostrar qué se acordó."),
+        new("Horas perdidas aclarando lo obvio", "Cada reunión de seguimiento cuesta tiempo. La mayoría de las preguntas deberían haberse respondido antes de empezar."),
+        new("Construyes lo que entendiste, no lo que pidieron", "La conversación fue ambigua. Tú tomaste decisiones. El cliente tenía otra imagen mental. Resultado: retrabajo."),
+        new("El equipo interpreta diferente", "Cada desarrollador leyó el mismo brief y entendió algo distinto. Sin especificación clara, cada uno construye su versión.")
     ];
 
-    // ── Stats ──
     private static readonly Stat[] _stats =
     [
-        new("1,000+", "Conversaciones por búsqueda"),
-        new("100+", "Señales de dolor detectadas"),
-        new("5", "Factores de puntuación de mercado"),
-        new("< 5 min", "De keyword a plan de acción")
+        new("10+", "Secciones de análisis por conversación"),
+        new("< 60s", "De conversación a especificación"),
+        new("100%", "Texto original preservado"),
+        new("0", "Reuniones extra necesarias")
     ];
 
-    // ── Mock opportunities ──
-    private static readonly MockOpp[] _mockOpportunities =
-    [
-        new("Automatización de facturación para freelancers", "🟢 SÍ FUERTE", "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30", 87, "text-emerald-400", "bg-emerald-400",
-            "Paso 3 horas a la semana sólo enviando facturas manualmente", "r/freelance", ["FreshBooks", "Wave", "Solo"]),
-        new("Constructor de portfolio para devs", "🟡 SÍ DÉBIL", "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30", 58, "text-yellow-400", "bg-yellow-400",
-            "Todos los portfolios se ven igual. Quiero algo que destaque", "r/webdev", ["GitHub Pages", "Vercel"]),
-        new("Onboarding de clientes para agencias", "🟢 SÍ FUERTE", "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30", 79, "text-emerald-400", "bg-emerald-400",
-            "Hacer onboarding a un nuevo cliente nos lleva 2 semanas de emails de ida y vuelta", "r/agency", ["Dubsado", "HoneyBook"])
-    ];
-
-    // ── Plans ──
     private static readonly PlanInfo[] _plans =
     [
-        new("Free", 0, 0, ["1 búsqueda (pago único, sin renovación)", "1 plan de acción (pago único, sin renovación)", "30 señales de dolor/búsqueda", "Reddit + HackerNews"]),
-        new("Starter", 5, 48, ["15 búsquedas/mes", "10 planes de acción/mes", "Señales de dolor ilimitadas", "1 monitor Radar", "Exportar resultados"]),
-        new("Pro", 19, 182, ["Búsquedas ilimitadas", "50 planes de acción/mes", "Señales de dolor ilimitadas", "5 monitores Radar", "Exportar resultados", "Soporte prioritario"]),
-        new("Agency", 59, 566, ["Todo ilimitado", "Planes de acción ilimitados", "15 monitores Radar", "Exportar resultados", "Soporte prioritario", "Funciones de equipo"])
+        new("Free",    0,   0,   ["3 análisis de conversación", "Todas las secciones de análisis", "Exportar como .txt", "Historial de análisis"]),
+        new("Starter", 9,   86,  ["20 análisis/mes", "Refinamiento con IA ilimitado", "Múltiples proyectos", "Exportar resultados"]),
+        new("Pro",     19,  182, ["Análisis ilimitados", "Refinamiento ilimitado", "Proyectos ilimitados", "Exportar resultados", "Soporte prioritario"]),
+        new("Agency",  49,  470, ["Todo ilimitado", "Múltiples usuarios", "Proyectos de equipo", "Exportar resultados", "Soporte dedicado"])
     ];
 
-    // ── Social proof ──
     private static readonly SocialProof[] _socialProofs =
     [
-        new("🧑‍💻", "Alex M.", "Indie Hacker", "Estaba a punto de pasar 3 meses construyendo un CRM. QueryRadar me mostró que el mercado está saturado pero hay una brecha enorme en onboarding de clientes. Pivoté en un día. Los mejores $19 que he gastado."),
-        new("🚀", "Sarah K.", "Fundadora SaaS", "Encontré mi idea de producto actual en mi primera búsqueda. Las señales de dolor eran tan claras — personas reales pidiendo a gritos una solución. Tuve clientes de pago a las 2 semanas del lanzamiento."),
-        new("⚡", "James R.", "Emprendedor Digital", "Solía pasar semanas leyendo hilos de Reddit. Ahora hago una búsqueda antes de comprometerme con cualquier idea. Es como tener un equipo de investigación de mercado a demanda.")
+        new("MD", "Marcos D.", "Freelance · Desarrollo Web", "Antes de ReqAI pasaba 2 horas después de cada reunión intentando ordenar lo que el cliente quería. Ahora pego el chat y en un minuto tengo un documento que le mando para confirmar. Los clientes quedan impresionados."),
+        new("VS", "Valeria S.", "CTO · Agencia Digital", "Lo que más me sorprendió fue la detección de inconsistencias. En el primer análisis encontró un conflicto que habríamos descubierto tres semanas después, ya con código escrito."),
+        new("DR", "Diego R.", "Product Manager", "La sección de Puntos de Decisión cambió cómo trabajo. Antes yo tomaba esas decisiones solo. Ahora las presento al cliente con opciones claras antes de arrancar. Cero sorpresas en entrega.")
     ];
 
-    // ── Comparison rows ──
     private static readonly ComparisonRow[] _comparisonRows =
     [
-        new("Tiempo al primer insight", "2–4 semanas", "< 5 minutos"),
-        new("Conversaciones analizadas", "50–100 (manual)", "1,000+ por búsqueda"),
-        new("Detección de señales de dolor", "Tu interpretación", "Intensidad puntuada por IA"),
-        new("Validación de mercado", "Intuición", "Puntuación de Realidad de Mercado (5 factores)"),
-        new("Análisis de competencia", "Buscar en Google", "Auto-detectado con análisis de brecha"),
-        new("Plan de acción", "Tú lo resuelves", "Plan listo para copiar y pegar")
+        new("Estructura de salida",              "Varía cada vez",               "Consistente y predecible siempre"),
+        new("Detección de inconsistencias",      "Tú las encuentras (o no)",     "Automática con descripción del riesgo"),
+        new("Puntos de decisión",                "Implícitos o ignorados",        "Explícitos con opciones y recomendación"),
+        new("Asignación de responsabilidades",   "No incluida",                  "Por rol, con acciones concretas"),
+        new("Modelo de dominio",                 "No disponible",                "Entidades y relaciones detectadas"),
+        new("Priorización MVP",                  "Tú decides sin contexto",       "Core / Importante / Opcional automatizado")
     ];
 
-    // ── Use cases ──
     private static readonly UseCase[] _useCases =
     [
-        new("💡", "Encuentra tu próximo SaaS", "Descubre problemas reales por los que la gente pagaría"),
-        new("✅", "Valida antes de construir", "Mata malas ideas en 5 minutos, no en 5 meses"),
-        new("🔍", "Detecta brechas de mercado", "Ve dónde fallan las herramientas actuales y los usuarios sufren"),
-        new("🏆", "Supera a la competencia", "Encuentra oportunidades que otros están perdiendo por completo")
+        new("💻", "Freelancers",      "Llega a la siguiente reunión con un documento, no con dudas"),
+        new("🏢", "Agencias",         "Estandariza la toma de requerimientos en todos tus proyectos"),
+        new("🚀", "Startups",         "Alinea al equipo técnico y de negocio desde el día uno"),
+        new("📋", "Product Managers", "Convierte entrevistas y feedback en specs accionables")
     ];
 }

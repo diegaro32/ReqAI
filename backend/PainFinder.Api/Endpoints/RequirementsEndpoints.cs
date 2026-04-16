@@ -106,6 +106,26 @@ public static class RequirementsEndpoints
             return Results.Ok(new { used, max });
         });
 
+        group.MapDelete("/{generationId:guid}", async (
+            Guid generationId,
+            ClaimsPrincipal user,
+            IRequirementsService requirementsService,
+            CancellationToken cancellationToken) =>
+        {
+            var userId = GetUserId(user);
+            if (userId is null) return Results.Unauthorized();
+
+            try
+            {
+                await requirementsService.DeleteGenerationAsync(userId.Value, generationId, cancellationToken);
+                return Results.NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.NotFound(new { error = ex.Message });
+            }
+        });
+
         return group;
     }
 

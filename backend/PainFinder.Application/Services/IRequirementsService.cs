@@ -11,4 +11,5 @@ public interface IRequirementsService
     Task<RequirementGenerationDto?> GetGenerationByIdAsync(Guid userId, Guid generationId, CancellationToken cancellationToken = default);
     Task<List<RequirementGenerationDto>> GetUserHistoryAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<(int Used, int Max)> GetGenerationLimitsAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task DeleteGenerationAsync(Guid userId, Guid generationId, CancellationToken cancellationToken = default);
 }

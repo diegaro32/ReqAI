@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PainFinder.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PainFinder.Infrastructure.Persistence;
 namespace PainFinder.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PainFinderDbContext))]
-    partial class PainFinderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260416131245_AddCleanedInput")]
+    partial class AddCleanedInput
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -335,38 +338,14 @@ namespace PainFinder.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("BusinessRules")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ConversationInput")
+                    b.Property<string>("CleanedInput")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DecisionPoints")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DomainModel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("FunctionalRequirements")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImplementationRisks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Inconsistencies")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LifecycleModel")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -374,11 +353,7 @@ namespace PainFinder.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnershipActions")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Prioritization")
+                    b.Property<string>("OriginalInput")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -386,14 +361,6 @@ namespace PainFinder.Infrastructure.Persistence.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("SuggestedFeatures")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SystemInsights")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SystemOverview")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

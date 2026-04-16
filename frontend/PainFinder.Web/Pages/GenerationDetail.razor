@@ -40,22 +40,267 @@
                     <Icon Name="download" Size="13" StrokeWidth="1.5" />
                     Exportar
                 </button>
+                <button @onclick="() => _showDeleteConfirm = true" title="Eliminar generación"
+                        class="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-semantic-pain/40 bg-semantic-pain/5 text-[12px] text-semantic-pain hover:bg-semantic-pain/10 transition-colors">
+                    <Icon Name="trash-2" Size="13" StrokeWidth="1.5" />
+                    Eliminar
+                </button>
             </div>
         </div>
 
-        @* Results grid *@
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-            @* Functional *@
-            <div class="glass-card p-5">
+        @* Delete confirmation popup *@
+        @if (_showDeleteConfirm)
+        {
+            <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div class="glass-card w-full max-w-sm mx-4 p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                            <Icon Name="trash-2" Size="18" Class="text-semantic-pain" StrokeWidth="1.5" />
+                        </div>
+                        <div>
+                            <h3 class="text-[15px] font-semibold text-txt-primary">Eliminar generación</h3>
+                            <p class="text-[12px] text-txt-muted">Esta acción no se puede deshacer</p>
+                        </div>
+                    </div>
+                    <p class="text-[13px] text-txt-secondary mb-5">
+                        Se eliminará esta generación y todos sus refinamientos de forma permanente.
+                    </p>
+                    @if (!string.IsNullOrEmpty(_deleteError))
+                    {
+                        <p class="text-[12px] text-semantic-pain mb-3">@_deleteError</p>
+                    }
+                    <div class="flex gap-3">
+                        <button @onclick="() => _showDeleteConfirm = false" disabled="@_deleting"
+                                class="flex-1 rounded-xl border border-surface-border/60 px-4 py-2.5 text-[13px] font-medium text-txt-secondary hover:bg-surface-hover/50 transition-colors disabled:opacity-60">
+                            Cancelar
+                        </button>
+                        <button @onclick="HandleDelete" disabled="@_deleting"
+                                class="flex-1 rounded-xl bg-semantic-pain px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-semantic-pain/80 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                            @if (_deleting)
+                            {
+                                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                <span>Eliminando...</span>
+                            }
+                            else
+                            {
+                                <span>Sí, eliminar</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* System Overview *@
+        @if (!string.IsNullOrWhiteSpace(_generation.SystemOverview))
+        {
+            <div class="glass-card p-5 mb-4 border-l-2 border-semantic-system">
+                <div class="flex items-center gap-2 mb-2">
+                    <Icon Name="cpu" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Visión general del sistema</h3>
+                </div>
+                <p class="text-[13px] text-txt-secondary leading-relaxed">@_generation.SystemOverview</p>
+            </div>
+        }
+
+        @* Domain Model *@
+        @if (DomainEntities.Count > 0 || DomainRelationships.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-highlight/10 flex items-center justify-center shrink-0">
+                        <Icon Name="git-branch" Size="15" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Modelo de dominio</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @if (DomainEntities.Count > 0)
+                    {
+                        <div>
+                            <p class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider mb-2">Entidades</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach (var e in DomainEntities)
+                                {
+                                    <span class="px-2.5 py-1 rounded-lg bg-semantic-highlight/10 text-semantic-highlight text-[11px] font-medium">@e</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (DomainRelationships.Count > 0)
+                    {
+                        <div>
+                            <p class="text-[11px] font-semibold text-txt-muted uppercase tracking-wider mb-2">Relaciones</p>
+                            <ul class="space-y-1">
+                                @foreach (var r in DomainRelationships)
+                                {
+                                    <li class="flex items-start gap-1.5 text-[12px] text-txt-secondary">
+                                        <Icon Name="arrow-right" Size="11" Class="text-semantic-highlight shrink-0 mt-0.5" StrokeWidth="2" />
+                                        @r
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Lifecycle & State Model *@
+        @if (LifecycleItems.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0">
+                        <Icon Name="refresh-cw" Size="15" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Modelo de ciclo de vida</h3>
+                </div>
+                <div class="space-y-4">
+                    @foreach (var lc in LifecycleItems)
+                    {
+                        <div class="rounded-xl border border-surface-border/40 p-4">
+                            <p class="text-[12px] font-semibold text-txt-primary mb-3">@lc.Entity</p>
+                            @if (lc.States.Count > 0)
+                            {
+                                <div class="flex flex-wrap items-center gap-1.5 mb-3">
+                                    @for (int i = 0; i < lc.States.Count; i++)
+                                    {
+                                        <span class="px-2.5 py-1 rounded-lg bg-semantic-opportunity/10 text-semantic-opportunity text-[11px] font-medium">@lc.States[i]</span>
+                                        @if (i < lc.States.Count - 1)
+                                        {
+                                            <Icon Name="arrow-right" Size="11" Class="text-txt-muted" StrokeWidth="2" />
+                                        }
+                                    }
+                                </div>
+                            }
+                            @if (lc.Transitions.Count > 0)
+                            {
+                                <ul class="space-y-1">
+                                    @foreach (var t in lc.Transitions)
+                                    {
+                                        <li class="flex items-start gap-1.5 text-[11px] text-txt-muted">
+                                            <span class="text-semantic-opportunity shrink-0">→</span><span>@t</span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Functional Requirements by group *@
+        @if (FuncGroups.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4">
                 <div class="flex items-center gap-2 mb-4">
                     <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0">
                         <Icon Name="check-circle" Size="15" Class="text-semantic-opportunity" StrokeWidth="1.5" />
                     </div>
                     <h3 class="text-[13px] font-semibold text-txt-primary">Requerimientos funcionales</h3>
-                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@FuncItems.Count</span>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@FuncGroups.Sum(g => g.Value.Count)</span>
                 </div>
-                @if (FuncItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
-                else { <ul class="space-y-2">@foreach (var item in FuncItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-opportunity shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+                <div class="space-y-4">
+                    @foreach (var group in FuncGroups)
+                    {
+                        <div>
+                            <p class="text-[11px] font-semibold text-semantic-opportunity/80 uppercase tracking-wider mb-2">@group.Key</p>
+                            <ul class="space-y-1.5">
+                                @foreach (var item in group.Value)
+                                {
+                                    <li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed">
+                                        <span class="text-semantic-opportunity shrink-0 mt-0.5">•</span><span>@item</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Prioritization *@
+        @if (PrioritizationData.Core.Count > 0 || PrioritizationData.Important.Count > 0 || PrioritizationData.Optional.Count > 0)
+        {
+            var prio = PrioritizationData;
+            <div class="glass-card p-5 mb-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-system/10 flex items-center justify-center shrink-0">
+                        <Icon Name="layers" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Priorización de requerimientos</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    @if (prio.Core.Count > 0)
+                    {
+                        <div class="rounded-xl border border-semantic-pain/20 bg-semantic-pain/5 p-3">
+                            <p class="text-[10px] font-bold text-semantic-pain uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <Icon Name="zap" Size="10" StrokeWidth="2" /> Core / MVP
+                            </p>
+                            <ul class="space-y-1.5">
+                                @foreach (var item in prio.Core)
+                                {
+                                    <li class="text-[11px] text-txt-secondary leading-relaxed">• @item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (prio.Important.Count > 0)
+                    {
+                        <div class="rounded-xl border border-semantic-cluster/20 bg-semantic-cluster/5 p-3">
+                            <p class="text-[10px] font-bold text-semantic-cluster uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <Icon Name="star" Size="10" StrokeWidth="2" /> Importante
+                            </p>
+                            <ul class="space-y-1.5">
+                                @foreach (var item in prio.Important)
+                                {
+                                    <li class="text-[11px] text-txt-secondary leading-relaxed">• @item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (prio.Optional.Count > 0)
+                    {
+                        <div class="rounded-xl border border-surface-border/40 bg-surface-hover/20 p-3">
+                            <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <Icon Name="clock" Size="10" StrokeWidth="2" /> Opcional
+                            </p>
+                            <ul class="space-y-1.5">
+                                @foreach (var item in prio.Optional)
+                                {
+                                    <li class="text-[11px] text-txt-secondary leading-relaxed">• @item</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Business Rules + Non-Functional side by side *@
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            @* Business Rules *@
+            <div class="glass-card p-5">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                        <Icon Name="book-open" Size="15" Class="text-semantic-pain" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Reglas de negocio</h3>
+                    <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@BizRules.Count</span>
+                </div>
+                @if (BizRules.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
+                else
+                {
+                    <ul class="space-y-2">
+                        @foreach (var item in BizRules)
+                        {
+                            <li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed">
+                                <span class="text-semantic-pain shrink-0 mt-0.5">•</span><span>@item</span>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
 
             @* Non-Functional *@
@@ -68,8 +313,47 @@
                     <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@NfuncItems.Count</span>
                 </div>
                 @if (NfuncItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
-                else { <ul class="space-y-2">@foreach (var item in NfuncItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-system shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+                else
+                {
+                    <ul class="space-y-2">
+                        @foreach (var item in NfuncItems)
+                        {
+                            <li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed">
+                                <span class="text-semantic-system shrink-0 mt-0.5">•</span><span>@item</span>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
+
+            @* Inconsistencies *@
+            @if (InconsistencyItems.Count > 0)
+            {
+                var inconsistencies = InconsistencyItems;
+                <div class="glass-card p-5 col-span-full border border-semantic-pain/20">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                            <Icon Name="alert-triangle" Size="15" Class="text-semantic-pain" StrokeWidth="1.5" />
+                        </div>
+                        <h3 class="text-[13px] font-semibold text-txt-primary">Inconsistencias y conflictos</h3>
+                        <span class="ml-auto text-[11px] text-semantic-pain px-2 py-0.5 rounded-full bg-semantic-pain/10 font-semibold">@inconsistencies.Count detectado@(inconsistencies.Count == 1 ? "" : "s")</span>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach (var inc in inconsistencies)
+                        {
+                            <div class="rounded-xl bg-semantic-pain/5 border border-semantic-pain/15 p-3">
+                                <p class="text-[12px] font-semibold text-txt-primary mb-1">@inc.Conflict</p>
+                                @if (!string.IsNullOrWhiteSpace(inc.Risk))
+                                {
+                                    <p class="text-[11px] text-semantic-pain/80 leading-relaxed mt-1 flex items-start gap-1">
+                                        <Icon Name="zap" Size="10" Class="shrink-0 mt-0.5" StrokeWidth="2" /><span>@inc.Risk</span>
+                                    </p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
 
             @* Ambiguities *@
             <div class="glass-card p-5">
@@ -77,11 +361,21 @@
                     <div class="w-8 h-8 rounded-lg bg-semantic-cluster/10 flex items-center justify-center shrink-0">
                         <Icon Name="help-circle" Size="15" Class="text-semantic-cluster" StrokeWidth="1.5" />
                     </div>
-                    <h3 class="text-[13px] font-semibold text-txt-primary">Ambigüedades / Info faltante</h3>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Ambigüedades y riesgos</h3>
                     <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@AmbItems.Count</span>
                 </div>
                 @if (AmbItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
-                else { <ul class="space-y-2">@foreach (var item in AmbItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-cluster shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+                else
+                {
+                    <ul class="space-y-2">
+                        @foreach (var item in AmbItems)
+                        {
+                            <li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed">
+                                <span class="text-semantic-cluster shrink-0 mt-0.5">•</span><span>@item</span>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
 
             @* Suggested Features *@
@@ -90,21 +384,161 @@
                     <div class="w-8 h-8 rounded-lg bg-semantic-highlight/10 flex items-center justify-center shrink-0">
                         <Icon Name="lightbulb" Size="15" Class="text-semantic-highlight" StrokeWidth="1.5" />
                     </div>
-                    <h3 class="text-[13px] font-semibold text-txt-primary">Funcionalidades sugeridas</h3>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Mejoras sugeridas</h3>
                     <span class="ml-auto text-[11px] text-txt-muted px-2 py-0.5 rounded-full bg-surface-hover/60">@SuggItems.Count</span>
                 </div>
                 @if (SuggItems.Count == 0) { <p class="text-[12px] text-txt-muted italic">Sin elementos.</p> }
-                else { <ul class="space-y-2">@foreach (var item in SuggItems){<li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed"><span class="text-semantic-highlight shrink-0 mt-0.5">•</span><span>@item</span></li>}</ul> }
+                else
+                {
+                    <ul class="space-y-2">
+                        @foreach (var item in SuggItems)
+                        {
+                            <li class="flex items-start gap-2 text-[12px] text-txt-secondary leading-relaxed">
+                                <span class="text-semantic-highlight shrink-0 mt-0.5">•</span><span>@item</span>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
         </div>
 
-        @* Original input toggle *@
+        @* System Insights *@
+        @if (InsightItems.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4 border border-semantic-system/20">
+                <div class="flex items-center gap-2 mb-3">
+                    <Icon Name="zap" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Perspectivas del sistema</h3>
+                </div>
+                <div class="space-y-2">
+                    @foreach (var item in InsightItems)
+                    {
+                        <div class="flex items-start gap-2.5 rounded-lg bg-semantic-system/5 px-3 py-2.5">
+                            <Icon Name="arrow-right" Size="12" Class="text-semantic-system shrink-0 mt-0.5" StrokeWidth="2" />
+                            <p class="text-[12px] text-txt-secondary leading-relaxed">@item</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Decision Points *@
+        @if (DecisionItems.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4 border border-semantic-cluster/20">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-cluster/10 flex items-center justify-center shrink-0">
+                        <Icon Name="git-merge" Size="15" Class="text-semantic-cluster" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Puntos de decisión</h3>
+                    <span class="ml-auto text-[11px] text-semantic-cluster px-2 py-0.5 rounded-full bg-semantic-cluster/10 font-semibold">@DecisionItems.Count pendiente@(DecisionItems.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="space-y-4">
+                    @foreach (var dp in DecisionItems)
+                    {
+                        <div class="rounded-xl border border-semantic-cluster/20 bg-semantic-cluster/5 p-4">
+                            <p class="text-[12px] font-semibold text-txt-primary mb-2">🔀 @dp.Decision</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                                @if (!string.IsNullOrWhiteSpace(dp.OptionA))
+                                {
+                                    <div class="rounded-lg bg-surface-hover/40 px-3 py-2">
+                                        <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider mb-1">Opción A</p>
+                                        <p class="text-[11px] text-txt-secondary">@dp.OptionA</p>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(dp.OptionB))
+                                {
+                                    <div class="rounded-lg bg-surface-hover/40 px-3 py-2">
+                                        <p class="text-[10px] font-bold text-txt-muted uppercase tracking-wider mb-1">Opción B</p>
+                                        <p class="text-[11px] text-txt-secondary">@dp.OptionB</p>
+                                    </div>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(dp.Impact))
+                            {
+                                <p class="text-[11px] text-txt-muted mb-1"><span class="font-semibold text-txt-secondary">Impacto:</span> @dp.Impact</p>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(dp.Recommendation))
+                            {
+                                <p class="text-[11px] text-semantic-opportunity flex items-start gap-1">
+                                    <Icon Name="check-circle" Size="11" Class="shrink-0 mt-0.5" StrokeWidth="2" />
+                                    <span><span class="font-semibold">Recomendación:</span> @dp.Recommendation</span>
+                                </p>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Ownership & Actions *@
+        @if (OwnershipItems.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-highlight/10 flex items-center justify-center shrink-0">
+                        <Icon Name="users" Size="15" Class="text-semantic-highlight" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Responsabilidades y acciones</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach (var own in OwnershipItems)
+                    {
+                        <div class="rounded-xl border border-surface-border/40 p-3">
+                            <p class="text-[11px] font-bold text-semantic-highlight uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <Icon Name="user" Size="11" StrokeWidth="2" /> @own.Role
+                            </p>
+                            <ul class="space-y-1">
+                                @foreach (var action in own.Actions)
+                                {
+                                    <li class="flex items-start gap-1.5 text-[11px] text-txt-secondary">
+                                        <span class="text-semantic-highlight shrink-0">→</span>@action
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Implementation Risks *@
+        @if (ImplRiskItems.Count > 0)
+        {
+            <div class="glass-card p-5 mb-4 border border-semantic-pain/20">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                        <Icon Name="flame" Size="15" Class="text-semantic-pain" StrokeWidth="1.5" />
+                    </div>
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Riesgos de implementación</h3>
+                    <span class="ml-auto text-[11px] text-semantic-pain px-2 py-0.5 rounded-full bg-semantic-pain/10 font-semibold">@ImplRiskItems.Count identificado@(ImplRiskItems.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="space-y-3">
+                    @foreach (var risk in ImplRiskItems)
+                    {
+                        <div class="rounded-xl bg-semantic-pain/5 border border-semantic-pain/15 p-4">
+                            <p class="text-[12px] font-bold text-txt-primary mb-1">@risk.Area</p>
+                            <p class="text-[11px] text-txt-secondary leading-relaxed mb-2">@risk.Risk</p>
+                            @if (!string.IsNullOrWhiteSpace(risk.Mitigation))
+                            {
+                                <p class="text-[11px] text-semantic-opportunity flex items-start gap-1">
+                                    <Icon Name="shield-check" Size="11" Class="shrink-0 mt-0.5" StrokeWidth="2" />
+                                    <span><span class="font-semibold">Mitigación:</span> @risk.Mitigation</span>
+                                </p>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Conversation panel *@
         <div class="glass-card mb-6">
             <button @onclick="() => _showInput = !_showInput"
                     class="w-full flex items-center justify-between px-5 py-4 text-[13px] font-medium text-txt-secondary hover:text-txt-primary transition-colors">
                 <span class="flex items-center gap-2">
                     <Icon Name="message-square" Size="15" StrokeWidth="1.5" />
-                    Conversación original
+                    Conversación analizada
                 </span>
                 <Icon Name="@(_showInput ? "chevron-up" : "chevron-down")" Size="15" StrokeWidth="1.5" />
             </button>
@@ -112,70 +546,12 @@
             {
                 <div class="px-5 pb-5">
                     <div class="rounded-xl bg-surface-bg/60 border border-surface-border/40 p-4">
-                        <pre class="text-[12px] text-txt-secondary whitespace-pre-wrap font-mono leading-relaxed">@_generation.OriginalInput</pre>
+                        <pre class="text-[12px] text-txt-secondary whitespace-pre-wrap font-mono leading-relaxed">@_generation.ConversationInput</pre>
                     </div>
                 </div>
             }
         </div>
 
-        @* Refinement section *@
-        <div class="glass-card p-6 mb-6">
-            <h2 class="text-[15px] font-semibold text-txt-primary mb-3 flex items-center gap-2">
-                <Icon Name="wand-2" Size="16" Class="text-semantic-highlight" StrokeWidth="1.5" />
-                Refinar resultado
-            </h2>
-            <p class="text-[12px] text-txt-muted mb-4">Proporciona una instrucción para ajustar los requerimientos. Ej: "hazlo más técnico", "agrega seguridad", "simplifica el lenguaje".</p>
-            <div class="flex gap-3">
-                <input @bind="_refineInstruction" placeholder="Ej: Hazlo más técnico y específico..."
-                       class="flex-1 rounded-xl bg-surface-bg/80 border border-surface-border px-4 py-2.5 text-[13px] text-txt-primary placeholder:text-txt-muted focus:border-semantic-system focus:ring-2 focus:ring-semantic-system/20 focus:outline-none transition-all" />
-                <button @onclick="HandleRefine" disabled="@_refining"
-                        class="btn-gradient px-4 py-2.5 text-[13px] rounded-xl flex items-center gap-2 disabled:opacity-60 shrink-0">
-                    @if (_refining)
-                    {
-                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Refinando...</span>
-                    }
-                    else
-                    {
-                        <Icon Name="wand-2" Size="14" StrokeWidth="2" />
-                        <span>Refinar</span>
-                    }
-                </button>
-            </div>
-            @if (!string.IsNullOrEmpty(_refineError))
-            {
-                <p class="text-[12px] text-semantic-pain mt-2">@_refineError</p>
-            }
-        </div>
-
-        @* Refinement history *@
-        @if (_generation.Refinements.Count > 0)
-        {
-            <div class="glass-card p-6">
-                <h2 class="text-[15px] font-semibold text-txt-primary mb-4 flex items-center gap-2">
-                    <Icon Name="history" Size="16" Class="text-txt-muted" StrokeWidth="1.5" />
-                    Historial de refinamientos
-                </h2>
-                <div class="space-y-3">
-                    @foreach (var refinement in _generation.Refinements)
-                    {
-                        var isActive = _activeRefinementId == refinement.Id;
-                        <div class="rounded-xl border @(isActive ? "border-semantic-system/40 bg-semantic-system/5" : "border-surface-border/40 bg-surface-card/40") p-4">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-[12px] text-txt-muted mb-1">@refinement.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
-                                    <p class="text-[13px] text-txt-secondary italic">"@refinement.Instruction"</p>
-                                </div>
-                                <button @onclick="() => ToggleRefinement(refinement)"
-                                        class="shrink-0 text-[11px] px-3 py-1.5 rounded-lg border @(isActive ? "border-semantic-system/40 text-semantic-system bg-semantic-system/10" : "border-surface-border/60 text-txt-muted hover:text-semantic-system") transition-colors">
-                                    @(isActive ? "Activo" : "Ver")
-                                </button>
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
     }
 </AuthGuard>
 
@@ -184,6 +560,7 @@
 
     [Inject] private IRequirementsService RequirementsService { get; set; } = default!;
     [Inject] private AuthService Auth { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private RequirementGenerationDto? _generation;
@@ -196,6 +573,10 @@
     private Guid? _activeRefinementId;
     private ParsedOutput? _activeOutput;
 
+    private bool _showDeleteConfirm;
+    private bool _deleting;
+    private string? _deleteError;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && Auth.User is not null)
@@ -206,16 +587,111 @@
         }
     }
 
-    private List<string> FuncItems  => _activeOutput?.FunctionalRequirements   ?? ParseList(_generation!.FunctionalRequirements);
-    private List<string> NfuncItems => _activeOutput?.NonFunctionalRequirements ?? ParseList(_generation!.NonFunctionalRequirements);
-    private List<string> AmbItems   => _activeOutput?.Ambiguities               ?? ParseList(_generation!.Ambiguities);
-    private List<string> SuggItems  => _activeOutput?.SuggestedFeatures         ?? ParseList(_generation!.SuggestedFeatures);
+    private async Task HandleDelete()
+    {
+        if (Auth.User is null || _generation is null) return;
+        _deleting = true;
+        _deleteError = null;
+        StateHasChanged();
+        try
+        {
+            await RequirementsService.DeleteGenerationAsync(Auth.User.Id, _generation.Id);
+            Nav.NavigateTo($"/projects/{_generation.ProjectId}");
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+            _deleting = false;
+            StateHasChanged();
+        }
+    }
+
+    private List<string> DomainEntities      => ParseDomainModel(_generation!.DomainModel).entities;
+    private List<string> DomainRelationships  => ParseDomainModel(_generation!.DomainModel).relationships;
+    private List<LifecycleParsed> LifecycleItems => _activeOutput?.LifecycleModel ?? ParseLifecycle(_generation!.LifecycleModel);
+    private Dictionary<string, List<string>> FuncGroups => _activeOutput?.FunctionalRequirements ?? ParseFuncGroups(_generation!.FunctionalRequirements);
+    private List<string> BizRules             => _activeOutput?.BusinessRules            ?? ParseList(_generation!.BusinessRules);
+    private List<InconsistencyParsed> InconsistencyItems => _activeOutput?.Inconsistencies ?? ParseInconsistencies(_generation!.Inconsistencies);
+    private List<string> NfuncItems           => _activeOutput?.NonFunctionalRequirements ?? ParseList(_generation!.NonFunctionalRequirements);
+    private List<string> AmbItems             => _activeOutput?.Ambiguities               ?? ParseList(_generation!.Ambiguities);
+    private PrioritizationParsed PrioritizationData => _activeOutput?.Prioritization        ?? ParsePrioritization(_generation!.Prioritization);
+    private List<DecisionPointParsed> DecisionItems   => _activeOutput?.DecisionPoints       ?? ParseDecisionPoints(_generation!.DecisionPoints);
+    private List<OwnershipParsed> OwnershipItems       => _activeOutput?.OwnershipActions    ?? ParseOwnership(_generation!.OwnershipActions);
+    private List<string> InsightItems                  => _activeOutput?.SystemInsights       ?? ParseList(_generation!.SystemInsights);
+    private List<string> SuggItems                     => _activeOutput?.SuggestedFeatures   ?? ParseList(_generation!.SuggestedFeatures);
+    private List<ImplRiskParsed> ImplRiskItems          => _activeOutput?.ImplementationRisks ?? ParseImplRisks(_generation!.ImplementationRisks);
+
+    private static readonly JsonSerializerOptions _jsonOpts = new() { PropertyNameCaseInsensitive = true };
 
     private static List<string> ParseList(string json)
     {
         if (string.IsNullOrWhiteSpace(json)) return [];
-        try { return JsonSerializer.Deserialize<List<string>>(json) ?? []; }
+        try { return JsonSerializer.Deserialize<List<string>>(json, _jsonOpts) ?? []; }
         catch { return [json]; }
+    }
+
+    private static Dictionary<string, List<string>> ParseFuncGroups(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json, _jsonOpts) ?? []; }
+        catch
+        {
+            var list = ParseList(json);
+            return list.Count > 0 ? new Dictionary<string, List<string>> { ["General"] = list } : [];
+        }
+    }
+
+    private static (List<string> entities, List<string> relationships) ParseDomainModel(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return ([], []);
+        try
+        {
+            var dm = JsonSerializer.Deserialize<DomainModelParsed>(json, _jsonOpts);
+            return (dm?.Entities ?? [], dm?.Relationships ?? []);
+        }
+        catch { return ([], []); }
+    }
+
+    private static List<LifecycleParsed> ParseLifecycle(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<LifecycleParsed>>(json, _jsonOpts) ?? []; }
+        catch { return []; }
+    }
+
+    private static List<InconsistencyParsed> ParseInconsistencies(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<InconsistencyParsed>>(json, _jsonOpts) ?? []; }
+        catch { return []; }
+    }
+
+    private static PrioritizationParsed ParsePrioritization(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new();
+        try { return JsonSerializer.Deserialize<PrioritizationParsed>(json, _jsonOpts) ?? new(); }
+        catch { return new(); }
+    }
+
+    private static List<DecisionPointParsed> ParseDecisionPoints(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<DecisionPointParsed>>(json, _jsonOpts) ?? []; }
+        catch { return []; }
+    }
+
+    private static List<OwnershipParsed> ParseOwnership(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<OwnershipParsed>>(json, _jsonOpts) ?? []; }
+        catch { return []; }
+    }
+
+    private static List<ImplRiskParsed> ParseImplRisks(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return JsonSerializer.Deserialize<List<ImplRiskParsed>>(json, _jsonOpts) ?? []; }
+        catch { return []; }
     }
 
     private void ToggleRefinement(RefinementResultDto refinement)
@@ -277,32 +753,194 @@
     {
         var g = _generation!;
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"REQUERIMIENTOS — {g.ProjectName}");
+        sb.AppendLine($"ANÁLISIS DE REQUERIMIENTOS — {g.ProjectName}");
         sb.AppendLine($"Generado: {g.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}");
         if (_activeOutput is not null) sb.AppendLine("[Versión refinada]");
         sb.AppendLine(new string('=', 60));
         sb.AppendLine();
 
-        AppendSection(sb, "REQUERIMIENTOS FUNCIONALES",    _activeOutput?.FunctionalRequirements   ?? ParseList(g.FunctionalRequirements));
-        AppendSection(sb, "REQUERIMIENTOS NO FUNCIONALES", _activeOutput?.NonFunctionalRequirements ?? ParseList(g.NonFunctionalRequirements));
-        AppendSection(sb, "AMBIGÜEDADES / INFO FALTANTE",  _activeOutput?.Ambiguities               ?? ParseList(g.Ambiguities));
-        AppendSection(sb, "FUNCIONALIDADES SUGERIDAS",     _activeOutput?.SuggestedFeatures         ?? ParseList(g.SuggestedFeatures));
+        if (!string.IsNullOrWhiteSpace(g.SystemOverview))
+        {
+            sb.AppendLine("VISIÓN GENERAL DEL SISTEMA");
+            sb.AppendLine(new string('-', 30));
+            sb.AppendLine(g.SystemOverview);
+            sb.AppendLine();
+        }
+
+        var lifecycle = LifecycleItems;
+        if (lifecycle.Count > 0)
+        {
+            sb.AppendLine("MODELO DE CICLO DE VIDA");
+            sb.AppendLine(new string('-', 30));
+            foreach (var lc in lifecycle)
+            {
+                sb.AppendLine($"  {lc.Entity}: {string.Join(" → ", lc.States)}");
+                foreach (var t in lc.Transitions) sb.AppendLine($"    → {t}");
+            }
+            sb.AppendLine();
+        }
+
+        var funcGroups = FuncGroups;
+        if (funcGroups.Count > 0)
+        {
+            sb.AppendLine("REQUERIMIENTOS FUNCIONALES");
+            sb.AppendLine(new string('-', 30));
+            foreach (var grp in funcGroups)
+            {
+                sb.AppendLine($"  [{grp.Key}]");
+                foreach (var item in grp.Value) sb.AppendLine($"  • {item}");
+            }
+            sb.AppendLine();
+        }
+
+        var prio = PrioritizationData;
+        if (prio.Core.Count > 0 || prio.Important.Count > 0 || prio.Optional.Count > 0)
+        {
+            sb.AppendLine("PRIORIZACIÓN");
+            sb.AppendLine(new string('-', 30));
+            if (prio.Core.Count > 0) { sb.AppendLine("  CORE / MVP:"); foreach (var i in prio.Core) sb.AppendLine($"  • {i}"); }
+            if (prio.Important.Count > 0) { sb.AppendLine("  IMPORTANTE:"); foreach (var i in prio.Important) sb.AppendLine($"  • {i}"); }
+            if (prio.Optional.Count > 0) { sb.AppendLine("  OPCIONAL:"); foreach (var i in prio.Optional) sb.AppendLine($"  • {i}"); }
+            sb.AppendLine();
+        }
+
+        AppendSection(sb, "REGLAS DE NEGOCIO",             BizRules);
+
+        var incs = InconsistencyItems;
+        if (incs.Count > 0)
+        {
+            sb.AppendLine("INCONSISTENCIAS Y CONFLICTOS");
+            sb.AppendLine(new string('-', 30));
+            foreach (var inc in incs)
+            {
+                sb.AppendLine($"  ! {inc.Conflict}");
+                if (!string.IsNullOrWhiteSpace(inc.Risk)) sb.AppendLine($"    Riesgo: {inc.Risk}");
+            }
+            sb.AppendLine();
+        }
+
+        var decisions = DecisionItems;
+        if (decisions.Count > 0)
+        {
+            sb.AppendLine("PUNTOS DE DECISIÓN");
+            sb.AppendLine(new string('-', 30));
+            foreach (var dp in decisions)
+            {
+                sb.AppendLine($"  >> {dp.Decision}");
+                if (!string.IsNullOrWhiteSpace(dp.OptionA)) sb.AppendLine($"     A: {dp.OptionA}");
+                if (!string.IsNullOrWhiteSpace(dp.OptionB)) sb.AppendLine($"     B: {dp.OptionB}");
+                if (!string.IsNullOrWhiteSpace(dp.Impact)) sb.AppendLine($"     Impacto: {dp.Impact}");
+                if (!string.IsNullOrWhiteSpace(dp.Recommendation)) sb.AppendLine($"     ✓ {dp.Recommendation}");
+            }
+            sb.AppendLine();
+        }
+
+        var owners = OwnershipItems;
+        if (owners.Count > 0)
+        {
+            sb.AppendLine("RESPONSABILIDADES Y ACCIONES");
+            sb.AppendLine(new string('-', 30));
+            foreach (var o in owners)
+            {
+                sb.AppendLine($"  [{o.Role}]");
+                foreach (var a in o.Actions) sb.AppendLine($"  → {a}");
+            }
+            sb.AppendLine();
+        }
+
+        AppendSection(sb, "REQUERIMIENTOS NO FUNCIONALES", NfuncItems);
+        AppendSection(sb, "AMBIGÜEDADES Y RIESGOS",        AmbItems);
+        AppendSection(sb, "PERSPECTIVAS DEL SISTEMA",      InsightItems);
+        AppendSection(sb, "MEJORAS SUGERIDAS",             SuggItems);
+
+        var implRisks = ImplRiskItems;
+        if (implRisks.Count > 0)
+        {
+            sb.AppendLine("RIESGOS DE IMPLEMENTACIÓN");
+            sb.AppendLine(new string('-', 30));
+            foreach (var r in implRisks)
+            {
+                sb.AppendLine($"  ⚠ {r.Area}: {r.Risk}");
+                if (!string.IsNullOrWhiteSpace(r.Mitigation)) sb.AppendLine($"    Mitigación: {r.Mitigation}");
+            }
+            sb.AppendLine();
+        }
+
         return sb.ToString();
     }
 
     private static void AppendSection(System.Text.StringBuilder sb, string title, List<string> items)
     {
+        if (items.Count == 0) return;
         sb.AppendLine(title);
         sb.AppendLine(new string('-', title.Length));
         foreach (var item in items) sb.AppendLine($"• {item}");
         sb.AppendLine();
     }
 
+    private sealed class DomainModelParsed
+    {
+        public List<string> Entities { get; set; } = [];
+        public List<string> Relationships { get; set; } = [];
+    }
+
+    private sealed class LifecycleParsed
+    {
+        public string Entity { get; set; } = string.Empty;
+        public List<string> States { get; set; } = [];
+        public List<string> Transitions { get; set; } = [];
+    }
+
+    private sealed class InconsistencyParsed
+    {
+        public string Conflict { get; set; } = string.Empty;
+        public string Risk { get; set; } = string.Empty;
+    }
+
+    private sealed class PrioritizationParsed
+    {
+        public List<string> Core { get; set; } = [];
+        public List<string> Important { get; set; } = [];
+        public List<string> Optional { get; set; } = [];
+    }
+
+    private sealed class DecisionPointParsed
+    {
+        public string Decision { get; set; } = string.Empty;
+        public string OptionA { get; set; } = string.Empty;
+        public string OptionB { get; set; } = string.Empty;
+        public string Impact { get; set; } = string.Empty;
+        public string Recommendation { get; set; } = string.Empty;
+    }
+
+    private sealed class OwnershipParsed
+    {
+        public string Role { get; set; } = string.Empty;
+        public List<string> Actions { get; set; } = [];
+    }
+
+    private sealed class ImplRiskParsed
+    {
+        public string Area { get; set; } = string.Empty;
+        public string Risk { get; set; } = string.Empty;
+        public string Mitigation { get; set; } = string.Empty;
+    }
+
     private sealed class ParsedOutput
     {
-        public List<string>? FunctionalRequirements { get; set; }
+        public Dictionary<string, List<string>>? FunctionalRequirements { get; set; }
+        public List<LifecycleParsed>? LifecycleModel { get; set; }
+        public List<string>? BusinessRules { get; set; }
+        public List<InconsistencyParsed>? Inconsistencies { get; set; }
         public List<string>? NonFunctionalRequirements { get; set; }
         public List<string>? Ambiguities { get; set; }
+        public PrioritizationParsed? Prioritization { get; set; }
+        public List<DecisionPointParsed>? DecisionPoints { get; set; }
+        public List<OwnershipParsed>? OwnershipActions { get; set; }
+        public List<string>? SystemInsights { get; set; }
         public List<string>? SuggestedFeatures { get; set; }
+        public List<ImplRiskParsed>? ImplementationRisks { get; set; }
+    }
+}
     }
 }

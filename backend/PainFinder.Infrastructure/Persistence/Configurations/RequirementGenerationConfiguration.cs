@@ -10,25 +10,27 @@ public class RequirementGenerationConfiguration : IEntityTypeConfiguration<Requi
     {
         builder.HasKey(g => g.Id);
 
-        builder.Property(g => g.OriginalInput)
-            .IsRequired()
-            .HasColumnType("nvarchar(max)");
-
-        builder.Property(g => g.FunctionalRequirements)
-            .IsRequired()
-            .HasColumnType("nvarchar(max)");
-
-        builder.Property(g => g.NonFunctionalRequirements)
-            .IsRequired()
-            .HasColumnType("nvarchar(max)");
-
-        builder.Property(g => g.Ambiguities)
-            .IsRequired()
-            .HasColumnType("nvarchar(max)");
-
-        builder.Property(g => g.SuggestedFeatures)
-            .IsRequired()
-            .HasColumnType("nvarchar(max)");
+        foreach (var col in new[]
+        {
+            nameof(RequirementGeneration.ConversationInput),
+            nameof(RequirementGeneration.SystemOverview),
+            nameof(RequirementGeneration.DomainModel),
+            nameof(RequirementGeneration.LifecycleModel),
+            nameof(RequirementGeneration.FunctionalRequirements),
+            nameof(RequirementGeneration.BusinessRules),
+            nameof(RequirementGeneration.Inconsistencies),
+            nameof(RequirementGeneration.NonFunctionalRequirements),
+            nameof(RequirementGeneration.Ambiguities),
+            nameof(RequirementGeneration.Prioritization),
+            nameof(RequirementGeneration.DecisionPoints),
+            nameof(RequirementGeneration.OwnershipActions),
+            nameof(RequirementGeneration.SystemInsights),
+            nameof(RequirementGeneration.SuggestedFeatures),
+            nameof(RequirementGeneration.ImplementationRisks),
+        })
+        {
+            builder.Property(col).IsRequired().HasColumnType("nvarchar(max)");
+        }
 
         builder.HasMany(g => g.Refinements)
             .WithOne(r => r.Generation)

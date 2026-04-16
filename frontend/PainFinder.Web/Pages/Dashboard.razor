@@ -142,7 +142,7 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-[12px] font-medium text-txt-secondary truncate">@g.ProjectName</p>
-                                    <p class="text-[11px] text-txt-muted truncate mt-0.5">@(g.OriginalInput.Length > 60 ? g.OriginalInput[..60] + "…" : g.OriginalInput)</p>
+                                    <p class="text-[11px] text-txt-muted truncate mt-0.5">@(g.ConversationInput.Length > 60 ? g.ConversationInput[..60] + "…" : g.ConversationInput)</p>
                                     <p class="text-[10px] text-txt-muted/60 mt-1">@g.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
                                 </div>
                             </a>

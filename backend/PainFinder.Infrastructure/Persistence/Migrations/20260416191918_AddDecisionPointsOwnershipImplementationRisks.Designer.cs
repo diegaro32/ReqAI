@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PainFinder.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using PainFinder.Infrastructure.Persistence;
 namespace PainFinder.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PainFinderDbContext))]
-    partial class PainFinderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260416191918_AddDecisionPointsOwnershipImplementationRisks")]
+    partial class AddDecisionPointsOwnershipImplementationRisks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -339,7 +342,7 @@ namespace PainFinder.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ConversationInput")
+                    b.Property<string>("CleanedInput")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -371,6 +374,10 @@ namespace PainFinder.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NonFunctionalRequirements")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OriginalInput")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

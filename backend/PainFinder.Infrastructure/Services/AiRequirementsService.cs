@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -34,13 +35,14 @@ public class AiRequirementsService(
             .FirstOrDefaultAsync(p => p.Id == request.ProjectId && p.UserId == userId, cancellationToken)
             ?? throw new InvalidOperationException("Proyecto no encontrado.");
 
-        var prompt = BuildGenerationPrompt(request.ConversationInput);
+        var normalizedInput = NormalizeWhitespace(request.ConversationInput);
 
         logger.LogInformation("Calling Gemini for project {ProjectId}, user {UserId}", request.ProjectId, userId);
 
         ChatResponse response;
         try
         {
+            var prompt = BuildGenerationPrompt(normalizedInput);
             response = await chatClient.GetResponseAsync(
                 [new ChatMessage(ChatRole.User, prompt)],
                 cancellationToken: cancellationToken);
@@ -58,11 +60,21 @@ public class AiRequirementsService(
         {
             Id = Guid.NewGuid(),
             ProjectId = request.ProjectId,
-            OriginalInput = request.ConversationInput,
+            ConversationInput = normalizedInput,
+            SystemOverview = output.SystemOverview,
+            DomainModel = JsonSerializer.Serialize(output.DomainModel),
+            LifecycleModel = JsonSerializer.Serialize(output.LifecycleModel),
             FunctionalRequirements = JsonSerializer.Serialize(output.FunctionalRequirements),
+            BusinessRules = JsonSerializer.Serialize(output.BusinessRules),
+            Inconsistencies = JsonSerializer.Serialize(output.Inconsistencies),
             NonFunctionalRequirements = JsonSerializer.Serialize(output.NonFunctionalRequirements),
             Ambiguities = JsonSerializer.Serialize(output.Ambiguities),
+            Prioritization = JsonSerializer.Serialize(output.Prioritization),
+            DecisionPoints = JsonSerializer.Serialize(output.DecisionPoints),
+            OwnershipActions = JsonSerializer.Serialize(output.OwnershipActions),
+            SystemInsights = JsonSerializer.Serialize(output.SystemInsights),
             SuggestedFeatures = JsonSerializer.Serialize(output.SuggestedFeatures),
+            ImplementationRisks = JsonSerializer.Serialize(output.ImplementationRisks),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -98,7 +110,6 @@ public class AiRequirementsService(
             RefinedOutput = JsonSerializer.Serialize(output),
             CreatedAt = DateTime.UtcNow
         };
-
         dbContext.RefinementResults.Add(refinement);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -159,15 +170,36 @@ public class AiRequirementsService(
         return (used, max);
     }
 
+    public async Task DeleteGenerationAsync(Guid userId, Guid generationId, CancellationToken cancellationToken = default)
+    {
+        var generation = await dbContext.RequirementGenerations
+            .Include(g => g.Project)
+            .FirstOrDefaultAsync(g => g.Id == generationId && g.Project.UserId == userId, cancellationToken)
+            ?? throw new InvalidOperationException("Generación no encontrada.");
+
+        dbContext.RequirementGenerations.Remove(generation);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private static RequirementGenerationDto ToDto(RequirementGeneration g, string projectName) =>
         new(g.Id,
             g.ProjectId,
             projectName,
-            g.OriginalInput,
+            g.ConversationInput,
+            g.SystemOverview,
+            g.DomainModel,
+            g.LifecycleModel,
             g.FunctionalRequirements,
+            g.BusinessRules,
+            g.Inconsistencies,
             g.NonFunctionalRequirements,
             g.Ambiguities,
+            g.Prioritization,
+            g.DecisionPoints,
+            g.OwnershipActions,
+            g.SystemInsights,
             g.SuggestedFeatures,
+            g.ImplementationRisks,
             g.CreatedAt,
             g.Refinements
                 .OrderByDescending(r => r.CreatedAt)
@@ -176,6 +208,10 @@ public class AiRequirementsService(
 
     private RequirementsOutput ParseOutput(string jsonText, string context)
     {
+        // Extraer JSON si viene envuelto en markdown code block
+        var match = System.Text.RegularExpressions.Regex.Match(jsonText, @"```(?:json)?\s*([\s\S]*?)```");
+        if (match.Success) jsonText = match.Groups[1].Value.Trim();
+
         try
         {
             return JsonSerializer.Deserialize<RequirementsOutput>(jsonText, JsonOptions) ?? new RequirementsOutput();
@@ -187,59 +223,212 @@ public class AiRequirementsService(
         }
     }
 
-    private static string BuildGenerationPrompt(string conversationInput) => $$"""
-        Eres un analista de software senior. Analiza la siguiente conversación con el cliente y extrae requerimientos de software estructurados.
+    private static string NormalizeWhitespace(string text)
+    {
+        text = Regex.Replace(text, @"\b\d{1,2}:\d{2}(:\d{2})?(\s?(AM|PM|am|pm))?\b", string.Empty);
+        text = Regex.Replace(text, @"\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b", string.Empty);
+        text = Regex.Replace(text, @"\b\d{4}[\/\-\.]\d{1,2}[\/\-\.]\d{1,2}\b", string.Empty);
+        text = Regex.Replace(text, @"[\[\(]\s*[\]\)]", string.Empty);
+        text = Regex.Replace(text, @"\n{2,}", "\n");
+        text = string.Join("\n", text.Split('\n').Select(l => l.Trim()));
+        text = Regex.Replace(text, @"\n{2,}", "\n");
+        return text.Trim();
+    }
 
-        CONVERSACIÓN:
+    private static string BuildGenerationPrompt(string conversationInput) => $$"""
+        You are a senior software architect operating in CRITICAL THINKING MODE.
+
+        Your job is NOT to summarize. Produce engineering-ready documentation for a team that starts building tomorrow.
+
+        YOU MUST:
+        - Extract business rules (explicit and implicit)
+        - Build a domain model with relationships
+        - Identify lifecycle/state transitions with triggers
+        - Detect inconsistencies and conflicts — DO NOT resolve, report them
+        - Reduce redundancy — high signal, low noise
+        - Prioritize what matters
+        - Force decisions where ambiguity exists
+        - Assign ownership for key actions
+        - Highlight risks and implementation impact
+
+        CONVERSATION TO ANALYZE:
         {{conversationInput}}
 
-        Responde con un objeto JSON usando exactamente esta estructura:
+        Respond with a JSON object using EXACTLY this structure (no markdown, no code blocks, just valid JSON):
         {
-          "functionalRequirements": ["El sistema deberá...", "..."],
-          "nonFunctionalRequirements": ["El sistema deberá responder en menos de...", "..."],
-          "ambiguities": ["No queda claro si...", "..."],
-          "suggestedFeatures": ["Se sugiere agregar...", "..."]
+          "systemOverview": "Specific system type and core purpose in 2-3 sentences",
+          "domainModel": {
+            "entities": ["Entity1", "Entity2"],
+            "relationships": ["Entity1 has many Entity2"]
+          },
+          "lifecycleModel": [
+            {
+              "entity": "EntityName",
+              "states": ["State1", "State2", "State3"],
+              "transitions": ["State1 → State2: trigger", "State2 → State3: trigger"]
+            }
+          ],
+          "functionalRequirements": {
+            "GroupName": ["The system shall...", "..."]
+          },
+          "businessRules": ["Rule: precise constraint or condition"],
+          "inconsistencies": [
+            {
+              "conflict": "What was said vs what conflicts",
+              "risk": "What risk this introduces if unresolved"
+            }
+          ],
+          "nonFunctionalRequirements": ["Performance: ...", "Security: ..."],
+          "ambiguities": ["Missing flow: ...", "Undefined ownership: ...", "Edge case: ..."],
+          "prioritization": {
+            "core": ["MVP-critical requirement"],
+            "important": ["Next phase requirement"],
+            "optional": ["Future enhancement"]
+          },
+          "decisionPoints": [
+            {
+              "decision": "What needs to be decided",
+              "optionA": "First option",
+              "optionB": "Second option (if applicable)",
+              "impact": "What changes depending on the decision",
+              "recommendation": "Best option based on context, or empty string if unclear"
+            }
+          ],
+          "ownershipActions": [
+            {
+              "role": "Product Owner / Tech Lead / Backend Dev / etc.",
+              "actions": ["Action 1", "Action 2"]
+            }
+          ],
+          "systemInsights": ["High-value insight about hidden complexity or product evolution"],
+          "suggestedFeatures": ["Feature clearly derived from conversation"],
+          "implementationRisks": [
+            {
+              "area": "Area or module at risk",
+              "risk": "Why it is risky or complex",
+              "mitigation": "Suggested mitigation or design consideration"
+            }
+          ]
         }
 
-        Reglas:
-        - functionalRequirements: Lo que el sistema debe HACER (comportamiento visible para el usuario, operaciones CRUD, flujos de trabajo)
-        - nonFunctionalRequirements: Atributos de calidad — rendimiento, seguridad, escalabilidad, disponibilidad, usabilidad
-        - ambiguities: Puntos poco claros, información faltante o contradicciones que requieren aclaración del cliente
-        - suggestedFeatures: Mejoras opcionales más allá de lo solicitado explícitamente — incluir solo cuando sean claramente relevantes
-        - Usa lenguaje imperativo y preciso. Mínimo 3 ítems por sección cuando el contenido lo permita.
-        - Responde ÚNICAMENTE con JSON válido. Sin markdown, sin bloques de código, sin texto adicional.
-        - Toda la respuesta debe estar en español.
+        RULES:
+        - inconsistencies.risk: explain the implementation consequence if not resolved
+        - decisionPoints: only for high-impact ambiguities that block architecture or data model decisions
+        - ownershipActions: make it actionable — real roles, real actions, not vague responsibilities
+        - implementationRisks: focus on areas likely to break, needing careful design, or hidden complexity
+        - Be strict with prioritization — if not MVP-critical, do not put it in core
+        - All text MUST be in Spanish
+        - Respond ONLY with valid JSON. No markdown, no code blocks, no extra text.
         """;
 
     private static string BuildRefinementPrompt(RequirementGeneration generation, string instruction) => $$"""
-        Eres un analista de software senior. Refina los siguientes requerimientos de software según la instrucción dada.
+        You are a senior software architect in CRITICAL THINKING MODE.
+        Refine the following analysis based on the given instruction.
 
-        REQUERIMIENTOS ACTUALES:
-        Funcionales: {{generation.FunctionalRequirements}}
-        No Funcionales: {{generation.NonFunctionalRequirements}}
-        Ambigüedades: {{generation.Ambiguities}}
-        Funcionalidades Sugeridas: {{generation.SuggestedFeatures}}
+        CURRENT ANALYSIS:
+        System Overview: {{generation.SystemOverview}}
+        Domain Model: {{generation.DomainModel}}
+        Lifecycle Model: {{generation.LifecycleModel}}
+        Functional Requirements: {{generation.FunctionalRequirements}}
+        Business Rules: {{generation.BusinessRules}}
+        Inconsistencies: {{generation.Inconsistencies}}
+        Non-Functional Requirements: {{generation.NonFunctionalRequirements}}
+        Ambiguities: {{generation.Ambiguities}}
+        Prioritization: {{generation.Prioritization}}
+        Decision Points: {{generation.DecisionPoints}}
+        Ownership & Actions: {{generation.OwnershipActions}}
+        System Insights: {{generation.SystemInsights}}
+        Suggested Features: {{generation.SuggestedFeatures}}
+        Implementation Risks: {{generation.ImplementationRisks}}
 
-        INSTRUCCIÓN DE REFINAMIENTO: "{{instruction}}"
+        REFINEMENT INSTRUCTION: "{{instruction}}"
 
-        Responde con un objeto JSON usando exactamente esta estructura:
+        Respond with a JSON object using EXACTLY this structure:
         {
-          "functionalRequirements": ["El sistema deberá...", "..."],
-          "nonFunctionalRequirements": ["El sistema deberá responder en menos de...", "..."],
-          "ambiguities": ["No queda claro si...", "..."],
-          "suggestedFeatures": ["Se sugiere agregar...", "..."]
+          "systemOverview": "string",
+          "domainModel": { "entities": [], "relationships": [] },
+          "lifecycleModel": [{ "entity": "", "states": [], "transitions": [] }],
+          "functionalRequirements": { "Group": [] },
+          "businessRules": [],
+          "inconsistencies": [{ "conflict": "", "risk": "" }],
+          "nonFunctionalRequirements": [],
+          "ambiguities": [],
+          "prioritization": { "core": [], "important": [], "optional": [] },
+          "decisionPoints": [{ "decision": "", "optionA": "", "optionB": "", "impact": "", "recommendation": "" }],
+          "ownershipActions": [{ "role": "", "actions": [] }],
+          "systemInsights": [],
+          "suggestedFeatures": [],
+          "implementationRisks": [{ "area": "", "risk": "", "mitigation": "" }]
         }
 
-        Aplica la instrucción con cuidado. Preserva la estructura y completitud.
-        Responde ÚNICAMENTE con JSON válido. Sin markdown, sin bloques de código, sin texto adicional.
-        Toda la respuesta debe estar en español.
+        Apply the instruction carefully. Maintain depth and precision.
+        All text MUST be in Spanish.
+        Respond ONLY with valid JSON. No markdown, no code blocks, no extra text.
         """;
+
+    private sealed class DomainModelOutput
+    {
+        public List<string> Entities { get; set; } = [];
+        public List<string> Relationships { get; set; } = [];
+    }
+
+    private sealed class LifecycleEntry
+    {
+        public string Entity { get; set; } = string.Empty;
+        public List<string> States { get; set; } = [];
+        public List<string> Transitions { get; set; } = [];
+    }
+
+    private sealed class InconsistencyEntry
+    {
+        public string Conflict { get; set; } = string.Empty;
+        public string Risk { get; set; } = string.Empty;
+    }
+
+    private sealed class PrioritizationOutput
+    {
+        public List<string> Core { get; set; } = [];
+        public List<string> Important { get; set; } = [];
+        public List<string> Optional { get; set; } = [];
+    }
+
+    private sealed class DecisionPointEntry
+    {
+        public string Decision { get; set; } = string.Empty;
+        public string OptionA { get; set; } = string.Empty;
+        public string OptionB { get; set; } = string.Empty;
+        public string Impact { get; set; } = string.Empty;
+        public string Recommendation { get; set; } = string.Empty;
+    }
+
+    private sealed class OwnershipEntry
+    {
+        public string Role { get; set; } = string.Empty;
+        public List<string> Actions { get; set; } = [];
+    }
+
+    private sealed class ImplementationRiskEntry
+    {
+        public string Area { get; set; } = string.Empty;
+        public string Risk { get; set; } = string.Empty;
+        public string Mitigation { get; set; } = string.Empty;
+    }
 
     private sealed class RequirementsOutput
     {
-        public List<string> FunctionalRequirements { get; set; } = [];
+        public string SystemOverview { get; set; } = string.Empty;
+        public DomainModelOutput DomainModel { get; set; } = new();
+        public List<LifecycleEntry> LifecycleModel { get; set; } = [];
+        public Dictionary<string, List<string>> FunctionalRequirements { get; set; } = [];
+        public List<string> BusinessRules { get; set; } = [];
+        public List<InconsistencyEntry> Inconsistencies { get; set; } = [];
         public List<string> NonFunctionalRequirements { get; set; } = [];
         public List<string> Ambiguities { get; set; } = [];
+        public PrioritizationOutput Prioritization { get; set; } = new();
+        public List<DecisionPointEntry> DecisionPoints { get; set; } = [];
+        public List<OwnershipEntry> OwnershipActions { get; set; } = [];
+        public List<string> SystemInsights { get; set; } = [];
         public List<string> SuggestedFeatures { get; set; } = [];
+        public List<ImplementationRiskEntry> ImplementationRisks { get; set; } = [];
     }
 }

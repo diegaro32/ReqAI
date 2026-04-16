@@ -64,36 +64,85 @@
         else
         {
             <div class="space-y-3">
-                @foreach (var gen in _generations)
-                {
-                    <a href="/generation/@gen.Id"
-                       class="glass-card p-5 block group hover:border-semantic-system/30 transition-all">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-7 h-7 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0">
-                                        <Icon Name="file-text" Size="13" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                    @foreach (var gen in _generations)
+                    {
+                        <div class="glass-card p-5 group hover:border-semantic-system/30 transition-all">
+                            <div class="flex items-start justify-between gap-4">
+                                <a href="/generation/@gen.Id" class="flex-1 min-w-0 block">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div class="w-7 h-7 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center shrink-0">
+                                            <Icon Name="file-text" Size="13" Class="text-semantic-opportunity" StrokeWidth="1.5" />
+                                        </div>
+                                        <span class="text-[11px] text-txt-muted">@gen.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
+                                        @if (gen.Refinements.Count > 0)
+                                        {
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-semantic-highlight/10 text-semantic-highlight text-[10px] font-medium">
+                                                <Icon Name="refresh-cw" Size="9" StrokeWidth="2" /> @gen.Refinements.Count refinamiento@(gen.Refinements.Count == 1 ? "" : "s")
+                                            </span>
+                                        }
                                     </div>
-                                    <span class="text-[11px] text-txt-muted">@gen.CreatedAt.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</span>
-                                    @if (gen.Refinements.Count > 0)
-                                    {
-                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-semantic-highlight/10 text-semantic-highlight text-[10px] font-medium">
-                                            <Icon Name="refresh-cw" Size="9" StrokeWidth="2" /> @gen.Refinements.Count refinamiento@(gen.Refinements.Count == 1 ? "" : "s")
-                                        </span>
-                                    }
+                                    <p class="text-[13px] text-txt-secondary line-clamp-2">
+                                        @(gen.ConversationInput.Length > 120 ? gen.ConversationInput[..120] + "…" : gen.ConversationInput)
+                                    </p>
+                                </a>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button @onclick="() => ConfirmDelete(gen)" title="Eliminar generación"
+                                            class="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-semantic-pain/40 bg-semantic-pain/5 text-[11px] text-semantic-pain hover:bg-semantic-pain/10 transition-all">
+                                        <Icon Name="trash-2" Size="12" StrokeWidth="1.5" />
+                                        Eliminar
+                                    </button>
+                                    <Icon Name="arrow-right" Size="16" Class="text-txt-muted/30 group-hover:text-semantic-system transition-colors mt-1" StrokeWidth="1.5" />
                                 </div>
-                                <p class="text-[13px] text-txt-secondary line-clamp-2">
-                                    @(gen.OriginalInput.Length > 120 ? gen.OriginalInput[..120] + "…" : gen.OriginalInput)
-                                </p>
                             </div>
-                            <Icon Name="arrow-right" Size="16" Class="text-txt-muted/30 group-hover:text-semantic-system transition-colors shrink-0 mt-1" StrokeWidth="1.5" />
                         </div>
-                    </a>
-                }
-            </div>
+                    }
+                </div>
         }
     }
 </AuthGuard>
+
+@* Delete confirmation popup *@
+@if (_genToDelete is not null)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-sm mx-4 p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-semantic-pain/10 flex items-center justify-center shrink-0">
+                    <Icon Name="trash-2" Size="18" Class="text-semantic-pain" StrokeWidth="1.5" />
+                </div>
+                <div>
+                    <h3 class="text-[15px] font-semibold text-txt-primary">Eliminar generación</h3>
+                    <p class="text-[12px] text-txt-muted">Esta acción no se puede deshacer</p>
+                </div>
+            </div>
+            <p class="text-[13px] text-txt-secondary mb-5">
+                Se eliminará esta generación y todos sus refinamientos de forma permanente.
+            </p>
+            @if (!string.IsNullOrEmpty(_deleteError))
+            {
+                <p class="text-[12px] text-semantic-pain mb-3">@_deleteError</p>
+            }
+            <div class="flex gap-3">
+                <button @onclick="CancelDelete" disabled="@_deleting"
+                        class="flex-1 rounded-xl border border-surface-border/60 px-4 py-2.5 text-[13px] font-medium text-txt-secondary hover:bg-surface-hover/50 transition-colors disabled:opacity-60">
+                    Cancelar
+                </button>
+                <button @onclick="HandleDelete" disabled="@_deleting"
+                        class="flex-1 rounded-xl bg-semantic-pain px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-semantic-pain/80 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                    @if (_deleting)
+                    {
+                        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Eliminando...</span>
+                    }
+                    else
+                    {
+                        <span>Sí, eliminar</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter] public Guid ProjectId { get; set; }
@@ -107,6 +156,10 @@
     private bool _loading = true;
     private bool _limitReached;
 
+    private RequirementGenerationDto? _genToDelete;
+    private bool _deleting;
+    private string? _deleteError;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && Auth.User is not null)
@@ -119,6 +172,44 @@
             _limitReached = max != -1 && used >= max;
 
             _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ConfirmDelete(RequirementGenerationDto gen)
+    {
+        _genToDelete = gen;
+        _deleteError = null;
+    }
+
+    private void CancelDelete()
+    {
+        _genToDelete = null;
+        _deleteError = null;
+    }
+
+    private async Task HandleDelete()
+    {
+        if (Auth.User is null || _genToDelete is null) return;
+        _deleting = true;
+        _deleteError = null;
+        StateHasChanged();
+        try
+        {
+            await RequirementsService.DeleteGenerationAsync(Auth.User.Id, _genToDelete.Id);
+            _generations.Remove(_genToDelete);
+            _genToDelete = null;
+
+            var (used, max) = await RequirementsService.GetGenerationLimitsAsync(Auth.User.Id);
+            _limitReached = max != -1 && used >= max;
+        }
+        catch (Exception ex)
+        {
+            _deleteError = ex.Message;
+        }
+        finally
+        {
+            _deleting = false;
             StateHasChanged();
         }
     }
