@@ -36,13 +36,14 @@ public class AiRequirementsService(
             ?? throw new InvalidOperationException("Proyecto no encontrado.");
 
         var normalizedInput = NormalizeWhitespace(request.ConversationInput);
+        var projectContext = await BuildProjectContextAsync(request.ProjectId, cancellationToken);
 
         logger.LogInformation("Calling Gemini for project {ProjectId}, user {UserId}", request.ProjectId, userId);
 
         ChatResponse response;
         try
         {
-            var prompt = BuildGenerationPrompt(normalizedInput, request.AnalysisMode);
+            var prompt = BuildGenerationPrompt(normalizedInput, request.AnalysisMode, projectContext);
             response = await chatClient.GetResponseAsync(
                 [new ChatMessage(ChatRole.User, prompt)],
                 cancellationToken: cancellationToken);
@@ -235,9 +236,60 @@ public class AiRequirementsService(
         return text.Trim();
     }
 
-    private static string BuildGenerationPrompt(string conversationInput, string analysisMode)
+    private async Task<string> BuildProjectContextAsync(Guid projectId, CancellationToken cancellationToken)
+    {
+        var previousGenerations = await dbContext.RequirementGenerations
+            .Where(g => g.ProjectId == projectId)
+            .OrderByDescending(g => g.CreatedAt)
+            .Take(3)
+            .Select(g => new
+            {
+                g.CreatedAt,
+                g.SystemOverview,
+                g.FunctionalRequirements,
+                g.BusinessRules,
+                g.Inconsistencies,
+                g.Ambiguities,
+                g.Prioritization,
+                g.ImplementationRisks
+            })
+            .ToListAsync(cancellationToken);
+
+        if (previousGenerations.Count == 0)
+            return string.Empty;
+
+        var sb = new System.Text.StringBuilder();
+        foreach (var generation in previousGenerations.OrderBy(g => g.CreatedAt))
+        {
+            sb.AppendLine($"Generación previa ({generation.CreatedAt:yyyy-MM-dd HH:mm} UTC)");
+            AppendContextField(sb, "Resumen", generation.SystemOverview);
+            AppendContextField(sb, "Requerimientos funcionales", generation.FunctionalRequirements);
+            AppendContextField(sb, "Reglas de negocio", generation.BusinessRules);
+            AppendContextField(sb, "Inconsistencias", generation.Inconsistencies);
+            AppendContextField(sb, "Ambigüedades", generation.Ambiguities);
+            AppendContextField(sb, "Prioridad MVP", generation.Prioritization);
+            AppendContextField(sb, "Riesgos", generation.ImplementationRisks);
+            sb.AppendLine();
+        }
+
+        return sb.ToString();
+    }
+
+    private static void AppendContextField(System.Text.StringBuilder sb, string label, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value is "[]" or "{}")
+            return;
+
+        sb.AppendLine($"{label}: {Truncate(value, 1200)}");
+    }
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength] + "...";
+
+    private static string BuildGenerationPrompt(string conversationInput, string analysisMode, string projectContext)
     {
         var isQuick = string.Equals(analysisMode, "Quick", StringComparison.OrdinalIgnoreCase);
+        var hasProjectContext = !string.IsNullOrWhiteSpace(projectContext);
         var modeInstructions = isQuick
             ? """
               QUICK MODE:
@@ -263,6 +315,23 @@ public class AiRequirementsService(
               For every other field in the JSON schema, return an empty object or empty array as appropriate.
               Avoid architecture-heavy output unless it is directly needed to clarify the requirements.
               """;
+        var contextInstructions = hasProjectContext
+            ? $$"""
+              PROJECT HISTORY CONTEXT:
+              {{projectContext}}
+
+              Use this history as context, not as absolute truth.
+              The new conversation has priority.
+              If the new conversation confirms something from history, mention it in systemInsights as "Confirmado: ...".
+              If it introduces something new, mention it in systemInsights as "Nuevo: ...".
+              If it changes a previous requirement, mention it in systemInsights as "Modificado: ...".
+              If it contradicts previous history, mention it in systemInsights as "Contradicción: ...".
+              Do not inherit previous assumptions if the new conversation does not support them.
+              """
+            : """
+              PROJECT HISTORY CONTEXT:
+              No previous generations exist for this project. Return systemInsights as an empty array unless a high-value change insight is explicitly needed.
+              """;
 
         return $$"""
         You are a senior software architect operating in CRITICAL THINKING MODE.
@@ -270,6 +339,8 @@ public class AiRequirementsService(
         Your job is NOT to summarize. Produce clear, engineering-ready requirements from a client conversation.
 
         {{modeInstructions}}
+
+        {{contextInstructions}}
 
         GENERAL RULES:
         - Reduce redundancy: high signal, low noise.
@@ -327,7 +398,7 @@ public class AiRequirementsService(
               "actions": ["Action 1", "Action 2"]
             }
           ],
-          "systemInsights": ["High-value insight about hidden complexity or product evolution"],
+          "systemInsights": ["History change note if project history exists, e.g. Nuevo/Modificado/Contradicción/Confirmado"],
           "suggestedFeatures": ["Feature clearly derived from conversation"],
           "implementationRisks": [
             {
@@ -342,6 +413,8 @@ public class AiRequirementsService(
         - The selected mode instructions are mandatory and override the example placeholders above.
         - In quick mode, only fill systemOverview, functionalRequirements and ambiguities.
         - In deep mode, only fill systemOverview, functionalRequirements, businessRules, ambiguities, inconsistencies, prioritization and implementationRisks.
+        - If project history exists, systemInsights is allowed in both modes and must contain only changes versus history.
+        - If project history does not exist, systemInsights must be [].
         - inconsistencies.risk: explain the implementation consequence if not resolved
         - For every field outside the selected mode, return an empty object or empty array as appropriate.
         - implementationRisks: focus on areas likely to break, needing careful design, or hidden complexity

@@ -372,13 +372,13 @@
             }
         </div>
 
-        @* System Insights *@
+        @* History Changes *@
         @if (InsightItems.Count > 0)
         {
             <div class="glass-card p-5 mb-4 border border-semantic-system/20">
                 <div class="flex items-center gap-2 mb-3">
-                    <Icon Name="zap" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
-                    <h3 class="text-[13px] font-semibold text-txt-primary">Perspectivas del sistema</h3>
+                    <Icon Name="git-merge" Size="15" Class="text-semantic-system" StrokeWidth="1.5" />
+                    <h3 class="text-[13px] font-semibold text-txt-primary">Cambios respecto al historial</h3>
                 </div>
                 <div class="space-y-2">
                     @foreach (var item in InsightItems)
@@ -820,7 +820,7 @@
 
         AppendSection(sb, "REQUERIMIENTOS NO FUNCIONALES", NfuncItems);
         AppendSection(sb, "AMBIGÜEDADES Y RIESGOS",        AmbItems);
-        AppendSection(sb, "PERSPECTIVAS DEL SISTEMA",      InsightItems);
+        AppendSection(sb, "CAMBIOS RESPECTO AL HISTORIAL", InsightItems);
         AppendSection(sb, "MEJORAS SUGERIDAS",             SuggItems);
 
         var implRisks = ImplRiskItems;
