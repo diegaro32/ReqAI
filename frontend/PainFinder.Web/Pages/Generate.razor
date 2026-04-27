@@ -50,6 +50,24 @@
 
             <div class="glass-card p-6 space-y-5">
                 <div>
+                    <label class="block text-[13px] font-medium text-txt-secondary mb-2">
+                        Tipo de generación
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" @onclick='() => _analysisMode = "Quick"'
+                                class="rounded-xl border px-4 py-3 text-left transition-colors @(_analysisMode == "Quick" ? "border-semantic-system bg-semantic-system/10" : "border-surface-border bg-surface-hover/20 hover:bg-surface-hover/40")">
+                            <span class="block text-[13px] font-semibold text-txt-primary">Rápida</span>
+                            <span class="block text-[11px] text-txt-muted mt-1">Resumen, requerimientos y preguntas pendientes.</span>
+                        </button>
+                        <button type="button" @onclick='() => _analysisMode = "Deep"'
+                                class="rounded-xl border px-4 py-3 text-left transition-colors @(_analysisMode == "Deep" ? "border-semantic-system bg-semantic-system/10" : "border-surface-border bg-surface-hover/20 hover:bg-surface-hover/40")">
+                            <span class="block text-[13px] font-semibold text-txt-primary">Profunda</span>
+                            <span class="block text-[11px] text-txt-muted mt-1">Incluye reglas, conflictos, prioridad MVP y riesgos.</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-[13px] font-medium text-txt-secondary">
                             Conversación con el cliente
@@ -109,6 +127,7 @@
 
     private ProjectDto? _project;
     private string _conversationInput = string.Empty;
+    private string _analysisMode = "Quick";
     private bool _loading = true;
     private bool _generating;
     private bool _limitReached;
@@ -161,7 +180,7 @@
             // no cancele la llamada a Gemini mientras procesa
             var result = await RequirementsService.GenerateAsync(
                 Auth.User!.Id,
-                new GenerateRequirementsRequest(ProjectId, _conversationInput.Trim()),
+                new GenerateRequirementsRequest(ProjectId, _conversationInput.Trim(), _analysisMode),
                 CancellationToken.None);
 
             Nav.NavigateTo($"/generation/{result.Id}");

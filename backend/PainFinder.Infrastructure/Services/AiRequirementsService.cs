@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -42,7 +42,7 @@ public class AiRequirementsService(
         ChatResponse response;
         try
         {
-            var prompt = BuildGenerationPrompt(normalizedInput);
+            var prompt = BuildGenerationPrompt(normalizedInput, request.AnalysisMode);
             response = await chatClient.GetResponseAsync(
                 [new ChatMessage(ChatRole.User, prompt)],
                 cancellationToken: cancellationToken);
@@ -235,21 +235,48 @@ public class AiRequirementsService(
         return text.Trim();
     }
 
-    private static string BuildGenerationPrompt(string conversationInput) => $$"""
+    private static string BuildGenerationPrompt(string conversationInput, string analysisMode)
+    {
+        var isQuick = string.Equals(analysisMode, "Quick", StringComparison.OrdinalIgnoreCase);
+        var modeInstructions = isQuick
+            ? """
+              QUICK MODE:
+              Produce only the 3 most useful sections for fast validation:
+              - systemOverview
+              - functionalRequirements
+              - ambiguities
+
+              For every other field in the JSON schema, return an empty object or empty array as appropriate.
+              Keep it concise and practical.
+              """
+            : """
+              DEEP MODE:
+              Produce a compact but complete analysis using only these 7 sections:
+              - systemOverview
+              - functionalRequirements
+              - businessRules
+              - ambiguities
+              - inconsistencies
+              - prioritization
+              - implementationRisks
+
+              For every other field in the JSON schema, return an empty object or empty array as appropriate.
+              Avoid architecture-heavy output unless it is directly needed to clarify the requirements.
+              """;
+
+        return $$"""
         You are a senior software architect operating in CRITICAL THINKING MODE.
 
-        Your job is NOT to summarize. Produce engineering-ready documentation for a team that starts building tomorrow.
+        Your job is NOT to summarize. Produce clear, engineering-ready requirements from a client conversation.
 
-        YOU MUST:
-        - Extract business rules (explicit and implicit)
-        - Build a domain model with relationships
-        - Identify lifecycle/state transitions with triggers
-        - Detect inconsistencies and conflicts — DO NOT resolve, report them
-        - Reduce redundancy — high signal, low noise
-        - Prioritize what matters
-        - Force decisions where ambiguity exists
-        - Assign ownership for key actions
-        - Highlight risks and implementation impact
+        {{modeInstructions}}
+
+        GENERAL RULES:
+        - Reduce redundancy: high signal, low noise.
+        - Do not invent details that are not supported by the conversation.
+        - If something is unclear, put it in ambiguities as a question.
+        - Detect inconsistencies and conflicts; do not silently resolve them.
+        - Keep each item actionable and specific.
 
         CONVERSATION TO ANALYZE:
         {{conversationInput}}
@@ -312,14 +339,17 @@ public class AiRequirementsService(
         }
 
         RULES:
+        - The selected mode instructions are mandatory and override the example placeholders above.
+        - In quick mode, only fill systemOverview, functionalRequirements and ambiguities.
+        - In deep mode, only fill systemOverview, functionalRequirements, businessRules, ambiguities, inconsistencies, prioritization and implementationRisks.
         - inconsistencies.risk: explain the implementation consequence if not resolved
-        - decisionPoints: only for high-impact ambiguities that block architecture or data model decisions
-        - ownershipActions: make it actionable — real roles, real actions, not vague responsibilities
+        - For every field outside the selected mode, return an empty object or empty array as appropriate.
         - implementationRisks: focus on areas likely to break, needing careful design, or hidden complexity
         - Be strict with prioritization — if not MVP-critical, do not put it in core
         - All text MUST be in Spanish
         - Respond ONLY with valid JSON. No markdown, no code blocks, no extra text.
         """;
+    }
 
     private static string BuildRefinementPrompt(RequirementGeneration generation, string instruction) => $$"""
         You are a senior software architect in CRITICAL THINKING MODE.

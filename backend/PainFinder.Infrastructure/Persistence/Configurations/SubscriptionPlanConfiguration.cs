@@ -14,11 +14,11 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
         builder.Property(s => s.PaymentCustomerId).HasColumnName("StripeCustomerId").HasMaxLength(255);
         builder.Property(s => s.PaymentSubscriptionId).HasColumnName("StripeSubscriptionId").HasMaxLength(255);
         builder.Property(s => s.PaymentVariantId).HasColumnName("StripePriceId").HasMaxLength(255);
-        builder.Property(s => s.AnalysesUsedThisMonth).HasColumnName("SearchesUsedThisMonth");
-        builder.Property(s => s.RefinementsUsedThisMonth).HasColumnName("MvpsUsedThisMonth");
         builder.HasOne(s => s.User).WithOne().HasForeignKey<SubscriptionPlan>(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(s => s.UserId).IsUnique();
 
+        builder.Ignore(s => s.AnalysesUsedThisMonth);
+        builder.Ignore(s => s.RefinementsUsedThisMonth);
         builder.Ignore(s => s.MonthlyPrice);
         builder.Ignore(s => s.AnnualPrice);
         builder.Ignore(s => s.CurrentPrice);

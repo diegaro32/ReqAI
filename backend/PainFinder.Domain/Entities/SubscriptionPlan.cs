@@ -13,9 +13,22 @@ public class SubscriptionPlan
     public string? PaymentCustomerId { get; set; }
     public string? PaymentSubscriptionId { get; set; }
     public string? PaymentVariantId { get; set; }
-    public int AnalysesUsedThisMonth { get; set; }
-    public int RefinementsUsedThisMonth { get; set; }
+    public int SearchesUsedThisMonth { get; set; }
+    public int MvpsUsedThisMonth { get; set; }
+    public int MonitorsUsed { get; set; }
     public DateTime CurrentPeriodStart { get; set; }
+
+    public int AnalysesUsedThisMonth
+    {
+        get => SearchesUsedThisMonth;
+        set => SearchesUsedThisMonth = value;
+    }
+
+    public int RefinementsUsedThisMonth
+    {
+        get => MvpsUsedThisMonth;
+        set => MvpsUsedThisMonth = value;
+    }
 
     // --- Pricing (USD) ---
 
