@@ -14,6 +14,8 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
         builder.Property(s => s.PaymentCustomerId).HasColumnName("StripeCustomerId").HasMaxLength(255);
         builder.Property(s => s.PaymentSubscriptionId).HasColumnName("StripeSubscriptionId").HasMaxLength(255);
         builder.Property(s => s.PaymentVariantId).HasColumnName("StripePriceId").HasMaxLength(255);
+        builder.Property(s => s.AnalysesUsedThisMonth).HasColumnName("SearchesUsedThisMonth");
+        builder.Property(s => s.RefinementsUsedThisMonth).HasColumnName("MvpsUsedThisMonth");
         builder.HasOne(s => s.User).WithOne().HasForeignKey<SubscriptionPlan>(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(s => s.UserId).IsUnique();
 
@@ -27,12 +29,10 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
         builder.Ignore(s => s.IsActive);
         builder.Ignore(s => s.IsCancelled);
         builder.Ignore(s => s.DaysRemaining);
-        builder.Ignore(s => s.MaxSearchesPerMonth);
-        builder.Ignore(s => s.MaxMvpsPerMonth);
-        builder.Ignore(s => s.MaxRadarMonitors);
-        builder.Ignore(s => s.MaxPainsPerSearch);
+        builder.Ignore(s => s.MaxAnalysesPerMonth);
+        builder.Ignore(s => s.MaxRefinementsPerMonth);
         builder.Ignore(s => s.CanExport);
-        builder.Ignore(s => s.CanSearch);
-        builder.Ignore(s => s.CanGenerateMvp);
+        builder.Ignore(s => s.CanAnalyze);
+        builder.Ignore(s => s.CanRefine);
     }
 }

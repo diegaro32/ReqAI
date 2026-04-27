@@ -13,9 +13,8 @@ public class SubscriptionPlan
     public string? PaymentCustomerId { get; set; }
     public string? PaymentSubscriptionId { get; set; }
     public string? PaymentVariantId { get; set; }
-    public int SearchesUsedThisMonth { get; set; }
-    public int MvpsUsedThisMonth { get; set; }
-    public int MonitorsUsed { get; set; }
+    public int AnalysesUsedThisMonth { get; set; }
+    public int RefinementsUsedThisMonth { get; set; }
     public DateTime CurrentPeriodStart { get; set; }
 
     // --- Pricing (USD) ---
@@ -23,18 +22,18 @@ public class SubscriptionPlan
     public static decimal GetMonthlyPrice(PlanType plan) => plan switch
     {
         PlanType.Free => 0m,
-        PlanType.Starter => 5m,
+        PlanType.Starter => 9m,
         PlanType.Pro => 19m,
-        PlanType.Agency => 59m,
+        PlanType.Agency => 49m,
         _ => 0m
     };
 
     public static decimal GetAnnualPrice(PlanType plan) => plan switch
     {
         PlanType.Free => 0m,
-        PlanType.Starter => 48m,
+        PlanType.Starter => 86m,
         PlanType.Pro => 182m,
-        PlanType.Agency => 566m,
+        PlanType.Agency => 470m,
         _ => 0m
     };
 
@@ -68,45 +67,26 @@ public class SubscriptionPlan
 
     // --- Limits ---
 
-    public int MaxSearchesPerMonth => PlanType switch
+    public int MaxAnalysesPerMonth => PlanType switch
     {
-        PlanType.Free => 1,
-        PlanType.Starter => 15,
+        PlanType.Free => 3,
+        PlanType.Starter => 20,
         PlanType.Pro => int.MaxValue,
         PlanType.Agency => int.MaxValue,
-        _ => 1
+        _ => 3
     };
 
-    public int MaxMvpsPerMonth => PlanType switch
-    {
-        PlanType.Free => 1,
-        PlanType.Starter => 10,
-        PlanType.Pro => 50,
-        PlanType.Agency => int.MaxValue,
-        _ => 1
-    };
-
-    public int MaxRadarMonitors => PlanType switch
+    public int MaxRefinementsPerMonth => PlanType switch
     {
         PlanType.Free => 0,
-        PlanType.Starter => 1,
-        PlanType.Pro => 5,
-        PlanType.Agency => 15,
-        _ => 0
-    };
-
-    public int MaxPainsPerSearch => PlanType switch
-    {
-        PlanType.Free => 30,
         PlanType.Starter => int.MaxValue,
         PlanType.Pro => int.MaxValue,
         PlanType.Agency => int.MaxValue,
-        _ => 30
+        _ => 0
     };
 
     public bool CanExport => PlanType is not PlanType.Free;
 
-    public bool CanSearch => SearchesUsedThisMonth < MaxSearchesPerMonth;
-    public bool CanGenerateMvp => MvpsUsedThisMonth < MaxMvpsPerMonth;
-    public bool CanCreateMonitor(int currentMonitors) => currentMonitors < MaxRadarMonitors;
+    public bool CanAnalyze => AnalysesUsedThisMonth < MaxAnalysesPerMonth;
+    public bool CanRefine => RefinementsUsedThisMonth < MaxRefinementsPerMonth;
 }

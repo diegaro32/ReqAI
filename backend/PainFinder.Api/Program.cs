@@ -79,8 +79,8 @@ try
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "PainFinder",
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "PainFinder",
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "ReqAI",
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "ReqAI",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });

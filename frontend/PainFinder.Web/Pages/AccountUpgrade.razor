@@ -83,19 +83,19 @@
                     <ul class="space-y-2 mb-6 flex-1">
                         <li class="flex items-start gap-2 text-xs text-txt-secondary">
                             <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
-                            @(plan.MaxSearchesPerMonth < 0 ? "Ilimitadas" : plan.MaxSearchesPerMonth.ToString()) búsquedas@(plan.MonthlyPrice == 0 ? " (pago único)" : "/mes")
+                            @(plan.MaxAnalysesPerMonth < 0 ? "Análisis ilimitados" : $"{plan.MaxAnalysesPerMonth} análisis")@(plan.MonthlyPrice == 0 ? " incluidos" : "/mes")
                         </li>
                         <li class="flex items-start gap-2 text-xs text-txt-secondary">
                             <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
-                            @(plan.MaxMvpsPerMonth < 0 ? "Ilimitados" : plan.MaxMvpsPerMonth.ToString()) planes de acción@(plan.MonthlyPrice == 0 ? " (pago único)" : "/mes")
+                            @(plan.MaxRefinementsPerMonth == 0 ? "Sin refinamientos con IA" : plan.MaxRefinementsPerMonth < 0 ? "Refinamientos ilimitados" : $"{plan.MaxRefinementsPerMonth} refinamientos")@(plan.MonthlyPrice == 0 || plan.MaxRefinementsPerMonth == 0 ? "" : "/mes")
                         </li>
                         <li class="flex items-start gap-2 text-xs text-txt-secondary">
                             <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
-                            @(plan.MaxPainsPerSearch < 0 ? "Ilimitadas" : plan.MaxPainsPerSearch.ToString()) señales de dolor/búsqueda
+                            Proyectos e historial de análisis
                         </li>
                         <li class="flex items-start gap-2 text-xs text-txt-secondary">
                             <span class="text-semantic-opportunity mt-0.5 shrink-0">✓</span>
-                            @(plan.MaxRadarMonitors < 0 ? "Ilimitados" : plan.MaxRadarMonitors.ToString()) monitores Radar
+                            Especificaciones listas para compartir
                         </li>
                         @if (plan.CanExport)
                         {

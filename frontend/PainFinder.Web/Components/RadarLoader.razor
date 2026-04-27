@@ -11,26 +11,26 @@
     </div>
     <div class="text-center">
         <p class="text-sm font-medium text-txt-primary">@Message</p>
-        <p class="text-[11px] text-txt-muted mt-1">La IA está analizando los resultados en segundo plano</p>
+        <p class="text-[11px] text-txt-muted mt-1">La IA está estructurando la conversación en segundo plano</p>
         <p class="text-[12px] text-semantic-highlight font-medium mt-3 animate-pulse">@_statusText</p>
     </div>
 </div>
 
 @code {
-    [Parameter] public string Message { get; set; } = "Escaneando fuentes...";
+    [Parameter] public string Message { get; set; } = "Analizando conversación...";
 
-    private string _statusText = "Conectando a las fuentes...";
+    private string _statusText = "Leyendo la conversación...";
     private System.Threading.Timer? _timer;
     private int _stepIndex;
 
     private static readonly string[] StatusSteps =
     [
-        "Conectando a las fuentes...",
-        "Recopilando conversaciones...",
-        "Detectando señales de dolor...",
-        "Agrupando patrones...",
-        "Evaluando realidad de mercado...",
-        "Generando oportunidades...",
+        "Leyendo la conversación...",
+        "Extrayendo requerimientos...",
+        "Detectando reglas de negocio...",
+        "Identificando inconsistencias...",
+        "Priorizando alcance del MVP...",
+        "Preparando la especificación...",
         "Ya casi..."
     ];
 

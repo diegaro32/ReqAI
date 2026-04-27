@@ -126,8 +126,8 @@ public class AuthService(
     {
         var jwtKey = configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT Key not configured.");
-        var issuer = configuration["Jwt:Issuer"] ?? "PainFinder";
-        var audience = configuration["Jwt:Audience"] ?? "PainFinder";
+        var issuer = configuration["Jwt:Issuer"] ?? "ReqAI";
+        var audience = configuration["Jwt:Audience"] ?? "ReqAI";
         var expirationHours = int.TryParse(configuration["Jwt:ExpirationInHours"], out var h) ? h : 24;
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));

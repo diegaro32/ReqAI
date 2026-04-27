@@ -16,16 +16,13 @@ public record SubscriptionPlanDto(
     decimal AnnualPrice,
     decimal EffectiveMonthlyPrice,
     int AnnualDiscountPercent,
-    int SearchesUsedThisMonth,
-    int MaxSearchesPerMonth,
-    int MvpsUsedThisMonth,
-    int MaxMvpsPerMonth,
-    int MonitorsUsed,
-    int MaxRadarMonitors,
-    int MaxPainsPerSearch,
+    int AnalysesUsedThisMonth,
+    int MaxAnalysesPerMonth,
+    int RefinementsUsedThisMonth,
+    int MaxRefinementsPerMonth,
     bool CanExport,
-    bool CanSearch,
-    bool CanGenerateMvp,
+    bool CanAnalyze,
+    bool CanRefine,
     DateTime CurrentPeriodStart);
 
 public record PlanPricingDto(
@@ -34,8 +31,6 @@ public record PlanPricingDto(
     decimal AnnualPrice,
     decimal EffectiveMonthlyPrice,
     int AnnualDiscountPercent,
-    int MaxSearchesPerMonth,
-    int MaxMvpsPerMonth,
-    int MaxRadarMonitors,
-    int MaxPainsPerSearch,
+    int MaxAnalysesPerMonth,
+    int MaxRefinementsPerMonth,
     bool CanExport);

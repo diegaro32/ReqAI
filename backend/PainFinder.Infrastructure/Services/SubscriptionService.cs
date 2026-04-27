@@ -65,10 +65,8 @@ public class SubscriptionService(PainFinderDbContext dbContext) : ISubscriptionS
                 plan.AnnualPrice,
                 plan.EffectiveMonthlyPrice,
                 plan.AnnualDiscountPercent,
-                plan.MaxSearchesPerMonth == int.MaxValue ? -1 : plan.MaxSearchesPerMonth,
-                plan.MaxMvpsPerMonth == int.MaxValue ? -1 : plan.MaxMvpsPerMonth,
-                plan.MaxRadarMonitors,
-                plan.MaxPainsPerSearch == int.MaxValue ? -1 : plan.MaxPainsPerSearch,
+                plan.MaxAnalysesPerMonth == int.MaxValue ? -1 : plan.MaxAnalysesPerMonth,
+                plan.MaxRefinementsPerMonth == int.MaxValue ? -1 : plan.MaxRefinementsPerMonth,
                 plan.CanExport);
         }).ToList();
     }
@@ -102,8 +100,8 @@ public class SubscriptionService(PainFinderDbContext dbContext) : ISubscriptionS
         if (now.Year != plan.CurrentPeriodStart.Year || now.Month != plan.CurrentPeriodStart.Month)
         {
             plan.CurrentPeriodStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            plan.SearchesUsedThisMonth = 0;
-            plan.MvpsUsedThisMonth = 0;
+            plan.AnalysesUsedThisMonth = 0;
+            plan.RefinementsUsedThisMonth = 0;
         }
     }
 
@@ -123,15 +121,12 @@ public class SubscriptionService(PainFinderDbContext dbContext) : ISubscriptionS
         plan.AnnualPrice,
         plan.EffectiveMonthlyPrice,
         plan.AnnualDiscountPercent,
-        plan.SearchesUsedThisMonth,
-        plan.MaxSearchesPerMonth == int.MaxValue ? -1 : plan.MaxSearchesPerMonth,
-        plan.MvpsUsedThisMonth,
-        plan.MaxMvpsPerMonth == int.MaxValue ? -1 : plan.MaxMvpsPerMonth,
-        plan.MonitorsUsed,
-        plan.MaxRadarMonitors,
-        plan.MaxPainsPerSearch == int.MaxValue ? -1 : plan.MaxPainsPerSearch,
+        plan.AnalysesUsedThisMonth,
+        plan.MaxAnalysesPerMonth == int.MaxValue ? -1 : plan.MaxAnalysesPerMonth,
+        plan.RefinementsUsedThisMonth,
+        plan.MaxRefinementsPerMonth == int.MaxValue ? -1 : plan.MaxRefinementsPerMonth,
         plan.CanExport,
-        plan.CanSearch,
-        plan.CanGenerateMvp,
+        plan.CanAnalyze,
+        plan.CanRefine,
         plan.CurrentPeriodStart);
 }

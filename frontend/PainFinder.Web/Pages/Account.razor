@@ -148,52 +148,52 @@
             <div class="mt-6">
                 <h2 class="text-[15px] font-semibold text-txt-primary mb-4">Uso en Este Período</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    @* Searches *@
+                    @* Analyses *@
                     <div class="glass-card p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-lg bg-semantic-system/10 flex items-center justify-center">
                                     <Icon Name="search" Size="16" Class="text-semantic-system" StrokeWidth="1.5" />
                                 </div>
-                                <span class="text-sm font-medium text-txt-primary">Búsquedas</span>
+                                <span class="text-sm font-medium text-txt-primary">Análisis</span>
                             </div>
                             <span class="text-xs text-txt-muted">
-                                @_plan.SearchesUsedThisMonth / @(_plan.MaxSearchesPerMonth < 0 ? "∞" : _plan.MaxSearchesPerMonth.ToString())
+                                @_plan.AnalysesUsedThisMonth / @(_plan.MaxAnalysesPerMonth < 0 ? "∞" : _plan.MaxAnalysesPerMonth.ToString())
                             </span>
                         </div>
                         <div class="w-full bg-surface-border/40 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all @UsageBarColor(SearchUsagePercent)"
-                                 style="width: @(Math.Min(SearchUsagePercent, 100))%"></div>
+                            <div class="h-2 rounded-full transition-all @UsageBarColor(AnalysisUsagePercent)"
+                                 style="width: @(Math.Min(AnalysisUsagePercent, 100))%"></div>
                         </div>
-                        @if (!_plan.CanSearch)
+                        @if (!_plan.CanAnalyze)
                         {
                             <p class="text-[11px] text-semantic-pain mt-2">
-                                @(_plan.PlanType == "Free" ? "Límite del plan gratuito alcanzado." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para más búsquedas.
+                                @(_plan.PlanType == "Free" ? "Límite del plan gratuito alcanzado." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para más análisis.
                             </p>
                         }
                     </div>
 
-                    @* Action Plans *@
+                    @* Refinements *@
                     <div class="glass-card p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-lg bg-semantic-opportunity/10 flex items-center justify-center">
                                     <Icon Name="zap" Size="16" Class="text-semantic-opportunity" StrokeWidth="1.5" />
                                 </div>
-                                <span class="text-sm font-medium text-txt-primary">Planes de Acción</span>
+                                <span class="text-sm font-medium text-txt-primary">Refinamientos</span>
                             </div>
                             <span class="text-xs text-txt-muted">
-                                @_plan.MvpsUsedThisMonth / @(_plan.MaxMvpsPerMonth < 0 ? "∞" : _plan.MaxMvpsPerMonth.ToString())
+                                @_plan.RefinementsUsedThisMonth / @(_plan.MaxRefinementsPerMonth < 0 ? "∞" : _plan.MaxRefinementsPerMonth.ToString())
                             </span>
                         </div>
                         <div class="w-full bg-surface-border/40 rounded-full h-2">
-                            <div class="h-2 rounded-full transition-all @UsageBarColor(MvpUsagePercent)"
-                                 style="width: @(Math.Min(MvpUsagePercent, 100))%"></div>
+                            <div class="h-2 rounded-full transition-all @UsageBarColor(RefinementUsagePercent)"
+                                 style="width: @(Math.Min(RefinementUsagePercent, 100))%"></div>
                         </div>
-                        @if (!_plan.CanGenerateMvp)
+                        @if (!_plan.CanRefine)
                         {
                             <p class="text-[11px] text-semantic-pain mt-2">
-                                @(_plan.PlanType == "Free" ? "Límite del plan gratuito alcanzado." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para más planes de acción.
+                                @(_plan.PlanType == "Free" ? "Los refinamientos están disponibles en planes pagos." : "Límite alcanzado.") <a href="/account/upgrade" class="underline font-semibold">Mejorar</a> para usar refinamientos.
                             </p>
                         }
                     </div>
@@ -207,15 +207,15 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div class="flex items-center gap-2">
                             <span class="text-semantic-opportunity text-sm">✓</span>
-                            <span class="text-xs text-txt-secondary">@(_plan.MaxSearchesPerMonth < 0 ? "Ilimitadas" : _plan.MaxSearchesPerMonth.ToString()) búsquedas/mes</span>
+                            <span class="text-xs text-txt-secondary">@(_plan.MaxAnalysesPerMonth < 0 ? "Ilimitados" : _plan.MaxAnalysesPerMonth.ToString()) análisis</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-semantic-opportunity text-sm">✓</span>
-                            <span class="text-xs text-txt-secondary">@(_plan.MaxMvpsPerMonth < 0 ? "Ilimitados" : _plan.MaxMvpsPerMonth.ToString()) planes de acción/mes</span>
+                            <span class="text-xs text-txt-secondary">@(_plan.MaxRefinementsPerMonth == 0 ? "Sin refinamientos con IA" : _plan.MaxRefinementsPerMonth < 0 ? "Refinamientos ilimitados" : $"{_plan.MaxRefinementsPerMonth} refinamientos")</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-semantic-opportunity text-sm">✓</span>
-                            <span class="text-xs text-txt-secondary">Reddit + HackerNews</span>
+                            <span class="text-xs text-txt-secondary">Historial de análisis por proyecto</span>
                         </div>
                         <div class="flex items-center gap-2">
                             @if (_plan.CanExport)
@@ -257,12 +257,12 @@
     private bool _cancelling;
     private string? _error;
 
-    private double SearchUsagePercent => _plan is not null && _plan.MaxSearchesPerMonth > 0
-        ? (double)_plan.SearchesUsedThisMonth / _plan.MaxSearchesPerMonth * 100
+    private double AnalysisUsagePercent => _plan is not null && _plan.MaxAnalysesPerMonth > 0
+        ? (double)_plan.AnalysesUsedThisMonth / _plan.MaxAnalysesPerMonth * 100
         : 0;
 
-    private double MvpUsagePercent => _plan is not null && _plan.MaxMvpsPerMonth > 0
-        ? (double)_plan.MvpsUsedThisMonth / _plan.MaxMvpsPerMonth * 100
+    private double RefinementUsagePercent => _plan is not null && _plan.MaxRefinementsPerMonth > 0
+        ? (double)_plan.RefinementsUsedThisMonth / _plan.MaxRefinementsPerMonth * 100
         : 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
